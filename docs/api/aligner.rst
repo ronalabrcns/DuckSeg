@@ -2,7 +2,7 @@
 aligner
 ========
 
-.. automodule:: cell_segmentation.aligner
+.. automodule:: DuckSeg.aligner
    :members:
    :undoc-members:
    :show-inheritance:
