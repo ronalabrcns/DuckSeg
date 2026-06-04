@@ -23,4 +23,4 @@ Cell Segmentation
    :toctree: api
    :recursive:
 
-   cell_segmentation.aligner
+   aligner
