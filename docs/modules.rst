@@ -9,12 +9,12 @@ Core Modules
    :toctree: api
    :recursive:
 
-   experiment_loader
-   experiment_evaluator
-   cell_video_visualizer
-   image_transformer
-   image_transforms
-   outlier_filters
+   DuckSeg.experiment_loader
+   DuckSeg.experiment_evaluator
+   DuckSeg.cell_video_visualizer
+   DuckSeg.image_transformer
+   DuckSeg.image_transforms
+   DuckSeg.outlier_filters
 
 Cell Segmentation
 =================
@@ -23,4 +23,4 @@ Cell Segmentation
    :toctree: api
    :recursive:
 
-   aligner
+   DuckSeg.aligner
