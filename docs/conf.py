@@ -1,10 +1,10 @@
 import sys
 import os
 
-sys.path.insert(0, os.path.abspath('../../src'))
+sys.path.insert(0, os.path.abspath('../src'))
 
 project = 'DuckSeg'
-copyright = '2026, DuckSeg Contributors'
+copyright = '2026, RonaLab RCNS'
 author = 'DuckSeg Contributors'
 release = '0.1.0'
 
