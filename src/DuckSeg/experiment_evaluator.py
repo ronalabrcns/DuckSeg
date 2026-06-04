@@ -1,5 +1,5 @@
 import dataclasses
-from experiment_loader import ExperimentBatch, Experiment, ExperimentType
+from DuckSeg.experiment_loader import ExperimentBatch, Experiment, ExperimentType
 from typing import Optional
 import numpy as np
 from numpy import ndarray
