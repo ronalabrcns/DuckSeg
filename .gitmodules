@@ -1,0 +1,3 @@
+[submodule "cellSAM"]
+	path = cellSAM
+	url = https://github.com/vanvalenlab/cellSAM.git

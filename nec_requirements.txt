@@ -1,0 +1,28 @@
+$ pipreqs.exe --print
+WARNING: Import named "matplotlib" not found locally. Trying to resolve it at the PyPI server.
+WARNING: Import named "matplotlib" was resolved to "matplotlib:3.10.8" package (https://pypi.org/project/matplotlib/).
+Please, verify manually the final list of requirements.txt to avoid possible dependency confusions.
+WARNING: Import named "nd2" not found locally. Trying to resolve it at the PyPI server.
+WARNING: Import named "nd2" was resolved to "nd2:0.11.3" package (https://pypi.org/project/nd2/).
+Please, verify manually the final list of requirements.txt to avoid possible dependency confusions.
+WARNING: Import named "numpy" not found locally. Trying to resolve it at the PyPI server.
+WARNING: Import named "numpy" was resolved to "numpy:2.4.4" package (https://pypi.org/project/numpy/).
+Please, verify manually the final list of requirements.txt to avoid possible dependency confusions.
+WARNING: Import named "Pillow" not found locally. Trying to resolve it at the PyPI server.
+WARNING: Import named "Pillow" was resolved to "pillow:12.2.0" package (https://pypi.org/project/pillow/).
+Please, verify manually the final list of requirements.txt to avoid possible dependency confusions.
+WARNING: Import named "plotly" not found locally. Trying to resolve it at the PyPI server.
+WARNING: Import named "plotly" was resolved to "plotly:6.7.0" package (https://pypi.org/project/plotly/).
+Please, verify manually the final list of requirements.txt to avoid possible dependency confusions.
+cellsam==0.0.dev1
+imageio==2.37.3
+ipython==9.12.0
+ipywidgets==8.1.8
+matplotlib==3.10.8
+nd2==0.11.3
+numpy==2.4.4
+opencv_python==4.13.0.92
+Pillow==12.2.0
+plotly==6.7.0
+torch==2.11.0
+INFO: Successfully output requirements
