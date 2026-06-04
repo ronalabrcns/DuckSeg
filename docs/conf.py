@@ -27,15 +27,6 @@ napoleon_numpy_docstrings = True
 autodoc_default_options = {
     'members': True,
     'member-order': 'bysource',
-    'undoc-members': False,
+    'undoc-members': True,
 }
 
-autodoc_mock_imports = [
-    "image_transforms",
-    "image_transformer",
-    "cell_video_visualizer",
-    "experiment_loader",
-    "experiment_evaluator",
-    "cell_segmentation",
-    "outlier_filters"
-]
