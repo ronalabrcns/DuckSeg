@@ -4,7 +4,7 @@ from typing import Optional
 import numpy as np
 from numpy import ndarray
 import enum
-from aligner import transform_2d, BilateralFilter
+from DuckSeg.aligner import transform_2d, BilateralFilter
 import cv2
 import torch
 

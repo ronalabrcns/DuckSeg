@@ -1,7 +1,7 @@
 import sys
 import os
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
+sys.path.insert(0, os.path.abspath('../../src'))
 
 project = 'DuckSeg'
 copyright = '2026, DuckSeg Contributors'
@@ -29,3 +29,13 @@ autodoc_default_options = {
     'member-order': 'bysource',
     'undoc-members': False,
 }
+
+autodoc_mock_imports = [
+    "image_transforms",
+    "image_transformer",
+    "cell_video_visualizer",
+    "experiment_loader",
+    "experiment_evaluator",
+    "cell_segmentation",
+    "outlier_filters"
+]
