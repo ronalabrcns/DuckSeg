@@ -682,8 +682,8 @@ def plot_score_avg(diffs, show = True, color='blue', label=None):
 def plot_brightness_score(batch: ExperimentBatch, score_type: ScoreType = ScoreType.Ratio, range_modifier=4, cell_filter=lambda x: True):
     diffs = calc_brightness_score(batch, score_type = score_type, range_modifier=range_modifier, cell_filter=cell_filter)
     flattened = [diff for exp_diff in diffs for diff in exp_diff]
+    plt.figure()
     plot_score_avg(flattened)
-    return flattened
 
 def plot_brightness_score_double(ctrl: ExperimentBatch, cnnd: ExperimentBatch, score_type: ScoreType = ScoreType.Ratio, range_modifier=4, cell_filter=lambda x: True):
     ctrl_diffs = calc_brightness_score(ctrl, score_type = score_type, range_modifier=range_modifier, cell_filter=cell_filter)

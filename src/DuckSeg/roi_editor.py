@@ -39,8 +39,8 @@ def show_roi_editor(experiment):
     heights = [float(end - start) for start, end in ranges]
     original_centers = [float(start + end) / 2 for start, end in original_ranges]
     original_heights = [float(end - start) for start, end in original_ranges]
-
     plt.ioff()
+
     fig, ax = plt.subplots(figsize=(8, 6))
     fig.canvas.header_visible = False
     n_frames = len(frames)
@@ -136,8 +136,8 @@ def show_roi_editor(experiment):
     reset_btn.on_click(on_reset)
     up_all.on_click(lambda _: shift_all(-1))
     down_all.on_click(lambda _: shift_all(1))
-
     plt.ion()
+
     display(widgets.VBox([
         widgets.HBox([play, slider, up_all, down_all, reset_btn]),
         widgets.HBox([fig.canvas, right_panel], layout=widgets.Layout(width='fit-content', align_items='flex-start'))

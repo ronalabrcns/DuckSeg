@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 from copy import deepcopy
-
+from DuckSeg.experiment_evaluator import generate_mask_transform
 
 def apply_experiment_filter(experiments, filter):
     if filter is None:
@@ -57,6 +57,7 @@ def apply_transforms(experiments, all_frames, transforms, show_after_transform):
 def generate_masks_using_filters_and_transforms(batch, experiment_filter, frame_filter, transforms, show_after_transform):
     # apply experiment filter and frame indices
     experiments = apply_experiment_filter(batch.experiments(), experiment_filter)
+    assert len(experiments) > 0, "No experiments after applying `experiment_filter`"
     frame_indices = calculate_frame_indices(frame_filter, experiments[0].max_len-1)
     all_frames = []
     for experiment in experiments:
@@ -67,7 +68,6 @@ def generate_masks_using_filters_and_transforms(batch, experiment_filter, frame_
     all_frames_copy = apply_transforms(experiments, all_frames, transforms, show_after_transform)
 
     # apply the masking transform
-    from DuckSeg.experiment_evaluator import generate_mask_transform
     all_frames_copy = apply_transform(generate_mask_transform, all_frames_copy)
     show_experiment_images(experiments, all_frames_copy)
 
