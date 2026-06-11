@@ -12,6 +12,8 @@ import pickle
 import matplotlib.pyplot as plt
 import enum
 
+import tifffile #add to dependencies also
+
 def nd2_u8_frames(file_name):
     with nd2.ND2File(file_name) as f:
         num_frames = f.attributes.sequenceCount
@@ -24,6 +26,22 @@ def nd2_frames(file_name):
 
 def get_frame_u8(f: nd2.ND2File, i: int) -> np.ndarray:
     return (f.read_frame(i)/(2.**16-1)*255).astype(np.uint8)
+
+def tiff_frames(file_name):
+    # tifffile returns a numpy array of shape (frames, height, width)
+    video = tifffile.imread(file_name)
+    return [frame for frame in video]
+
+def tiff_u8_frames(file_name):
+    video = tifffile.imread(file_name)
+    # Convert to 8-bit safely depending on the original data type
+    if video.dtype == np.uint16:
+        return [(frame / (2.**16 - 1) * 255).astype(np.uint8) for frame in video]
+    elif video.dtype == np.uint8:
+        return [frame for frame in video]
+    else:
+        # Fallback for weird float/32-bit formats
+        return [(frame / frame.max() * 255).astype(np.uint8) for frame in video]
 
 def generate_ROI_ranges(roi) -> list[tuple[float]]:
     in_roi = False
@@ -58,17 +76,30 @@ class Experiment:
 
     def frames(self):
         if self.loaded_video is None:
-            self.loaded_video = nd2_frames(self.path)
-            if self.max_len is not None:
-                self.loaded_video = self.loaded_video[:self.max_len]
+            if self.path.lower().endswith(".nd2"):
+                self.loaded_video = nd2_frames(self.path)
+            elif self.path.lower().endswith((".tif", ".tiff")):
+                self.loaded_video = tiff_frames(self.path)
+            else:
+                raise ValueError(f"Unsupported video file format: {self.path}")
+                
+        if self.max_len is not None:
+            self.loaded_video = self.loaded_video[:self.max_len]
         return self.loaded_video
 
     def frames_u8(self):
         if self.loaded_video_u8 is None:
-            self.loaded_video_u8 = nd2_u8_frames(self.path)
-            if self.max_len is not None:
-                self.loaded_video_u8 = self.loaded_video_u8[:self.max_len]
+            if self.path.lower().endswith(".nd2"):
+                self.loaded_video_u8 = nd2_u8_frames(self.path)
+            elif self.path.lower().endswith((".tif", ".tiff")):
+                self.loaded_video_u8 = tiff_u8_frames(self.path)
+            else:
+                raise ValueError(f"Unsupported video file format: {self.path}")
+                
+        if self.max_len is not None:
+            self.loaded_video_u8 = self.loaded_video_u8[:self.max_len]
         return self.loaded_video_u8
+        
     def frame_u8(self, i: int):
         return self.frames_u8()[i]
     def plot_first_frame(self):
@@ -90,14 +121,30 @@ class Experiment:
         # Display the animation in the notebook
         a = HTML(ani.to_jshtml())
         display(a)
+    def corrected_roi_path(self) -> str:
+        base, ext = os.path.splitext(self.ROI_path)
+        return base + '_corrected' + ext
+
     def ROI_frame(self):
         if self.loaded_ROI is None:
-            image = Image.open(self.ROI_path)
-            self.loaded_ROI = np.array(image)
+            corrected = self.corrected_roi_path()
+            path = corrected if os.path.exists(corrected) else self.ROI_path
+            self.loaded_ROI = np.array(Image.open(path))
         return self.loaded_ROI
 
     def plot_ROI(self):
         plt.imshow(self.ROI_frame())
+        plt.show()
+
+    def plot_frame_with_roi_masked(self, frame_idx: int = None):
+        frames = self.frames_u8()
+        idx = len(frames) // 2 if frame_idx is None else frame_idx
+        frame = frames[idx].copy()
+        for start, end in self.ROI_ranges():
+            frame[int(start):int(end), :] = 0
+        fig, ax = plt.subplots()
+        ax.imshow(frame, cmap='viridis')
+        ax.set_title(self.name)
         plt.show()
 
 
@@ -144,25 +191,35 @@ class ExperimentBatch:
     def experiment_files(self):
         return os.listdir(self.path)
     def experiments(self) -> list[Experiment]:
-        videos = [file for file in self.experiment_files() if file.endswith(".nd2")]
-        ROIs = [file[:-4] + "_ROI.tif" for file in videos]
+        all_files = self.experiment_files()
+        # Grab videos: Must be nd2, tif, or tiff AND must NOT be the ROI files
+        videos = [
+            f for f in all_files 
+            if f.lower().endswith((".nd2", ".tif", ".tiff")) 
+            and not f.endswith("_ROI.tif")
+        ]
         experiments = []
-        for (v, r) in zip(videos, ROIs):
+        for v in videos:
+            # Safely split the base name from the extension to build the ROI filename
+            base_name = os.path.splitext(v)[0]
+            roi_name = base_name + "_ROI.tif"
+            
             experiment = Experiment(
-                name=v[:-4],
+                name=base_name,
                 path=os.path.join(self.path, v),
-                ROI_path=os.path.join(self.path, r),
+                ROI_path=os.path.join(self.path, roi_name),
                 max_len=self.max_len
             )
-            assert os.path.exists(experiment.path)
-            #assert os.path.exists(experiment.ROI_path)
+            assert os.path.exists(experiment.path), f"Video file {experiment.path} not found."
             experiments.append(experiment)
+            
         return sorted(experiments, key=lambda exp: exp.name)
+        
     def ko_experiment(self, i: int):
-        end = f"00{i}.nd2"
+        end = f"00{i}"
         return [e for e in self.experiments() if "_KO_" in e.path and e.path.endswith(end)][0]
     def wt_experiment(self, i: int):
-        end = f"00{i}.nd2"
+        end = f"00{i}"
         return [e for e in self.experiments() if "_WT_" in e.path and e.path.endswith(end)][0]
     def wt_experiments(self):
         return [e for e in self.experiments() if "_WT_" in e.path]
