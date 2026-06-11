@@ -1,26 +1,24 @@
 =====================
 API Reference
-=====================
+=============
 
 Core Modules
 ============
 
-.. autosummary::
-   :toctree: api
-   :recursive:
+.. toctree::
+   :maxdepth: 1
 
-   DuckSeg.experiment_loader
-   DuckSeg.experiment_evaluator
-   DuckSeg.cell_video_visualizer
-   DuckSeg.image_transformer
-   DuckSeg.image_transforms
-   DuckSeg.outlier_filters
+   api/experiment_loader
+   api/experiment_evaluator
+   api/cell_video_visualizer
+   api/image_transformer
+   api/image_transforms
+   api/outlier_filters
 
 Cell Segmentation
 =================
 
-.. autosummary::
-   :toctree: api
-   :recursive:
+.. toctree::
+   :maxdepth: 1
 
-   DuckSeg.aligner
+   api/aligner
