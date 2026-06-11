@@ -11,5 +11,5 @@ opencv_python==4.13.0.92
 Pillow==12.2.0
 plotly==6.7.0
 torch==2.11.0
-tiffffile==2026.6.1
+tifffile==2026.6.1
 
