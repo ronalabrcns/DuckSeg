@@ -123,7 +123,7 @@ class Experiment:
         display(a)
     def corrected_roi_path(self) -> str:
         base, ext = os.path.splitext(self.ROI_path)
-        return base + '_corrected' + ext
+        return base + '_corrected_ROI' + ext
 
     def ROI_frame(self):
         if self.loaded_ROI is None:
