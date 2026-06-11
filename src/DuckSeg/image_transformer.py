@@ -67,7 +67,7 @@ def generate_masks_using_filters_and_transforms(batch, experiment_filter, frame_
     all_frames_copy = apply_transforms(experiments, all_frames, transforms, show_after_transform)
 
     # apply the masking transform
-    from DuckSeg.experiment_evaluator import generate_mask_transform
+    from experiment_evaluator import generate_mask_transform
     all_frames_copy = apply_transform(generate_mask_transform, all_frames_copy)
     show_experiment_images(experiments, all_frames_copy)
 

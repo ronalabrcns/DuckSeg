@@ -81,15 +81,18 @@ class BoundingBox:
     def range_to_relative(self, range: tuple[float]) -> tuple[float]:
         return (range[0] - self.x_min, range[1] - self.x_min)
         
-def evalute_batch(batch: ExperimentBatch, start = 1, transforms=None):
+def evalute_batch(batch: ExperimentBatch, start = 1, transforms=None, use_cache=True):
     for experiment in batch.experiments():
         print(f"Evaluating {experiment.name}")
-        try:
-            wt_eval = ExperimentEvaluator.load_experiment(experiment)
-            print("Loaded from cache")
-        except:
-            wt_eval = evalute_experiment1(experiment, transforms=transforms)
-            wt_eval.save(force=True)
+        if use_cache:
+            try:
+                wt_eval = ExperimentEvaluator.load_experiment(experiment)
+                print("Loaded from cache")
+                continue
+            except:
+                pass
+        wt_eval = evalute_experiment1(experiment, transforms=transforms)
+        wt_eval.save(force=True)
         
 def print_counts(arr):
     unique_elements, counts = np.unique(arr, return_counts=True)
@@ -431,6 +434,7 @@ class CellVideo:
 
     def __post_init__(self):
         self.laser_ranges = [range for range in self.laser_ranges if self.boxes[0].intersects_y_range(*range)]
+        assert len(self.laser_ranges) != 0, "ROI ranges modified after evaluate_batch!"
 
     def expanded_ranges(self, modifier):
         res = []
