@@ -21,8 +21,8 @@ exclude_patterns = ['_build']
 html_theme = 'pydata_sphinx_theme'
 html_static_path = ['_static']
 
-napoleon_google_docstrings = False
-napoleon_numpy_docstrings = True
+napoleon_google_docstring = False
+napoleon_numpy_docstring = True
 
 autodoc_default_options = {
     'members': True,
