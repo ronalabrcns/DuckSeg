@@ -1,4 +1,6 @@
-<img width="1536" height="1024" alt="DuckSeg logo" src="https://github.com/user-attachments/assets/c976cce1-d3c2-4bc3-bc5b-70451415ea06" />
+<img width="1536" height="510" alt="DuckSeg_hd_logo5_narrow" src="https://github.com/user-attachments/assets/af3217f1-4586-4ba8-a6a9-5cb529e4dedd" />
+
+
 
 # DuckSeg
 
