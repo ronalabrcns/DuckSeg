@@ -1,3 +1,18 @@
+"""
+Interactive Jupyter widget for correcting laser ROI boundaries by hand.
+
+Automatic ROI detection (:func:`DuckSeg.experiment_loader.generate_ROI_ranges`)
+occasionally mis-detects the exact row range of the laser strip from the
+ROI mask image, e.g. due to noise or a faint mask edge.
+:func:`show_roi_editor` renders one experiment's video with its detected
+ROI range(s) overlaid as draggable bands; nudging a band up/down writes a
+corrected mask to :meth:`~DuckSeg.experiment_loader.Experiment.corrected_roi_path`,
+which :meth:`~DuckSeg.experiment_loader.Experiment.ROI_frame` then prefers
+over the original mask on every subsequent load — so the correction is
+picked up transparently by the rest of the pipeline (segmentation,
+tracking, and brightness scoring) without any other code changes.
+"""
+
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from matplotlib.transforms import blended_transform_factory
@@ -10,11 +25,27 @@ from DuckSeg.experiment_loader import generate_ROI_ranges
 
 
 def _load_ranges_and_shape(experiment):
+    """Return the current (possibly already corrected) ROI ranges and mask shape."""
     roi = experiment.ROI_frame()
     return generate_ROI_ranges(roi), roi.shape
 
 
 def _save(experiment, centers, heights, roi_shape):
+    """
+    Write a corrected ROI mask built from band centers/heights to disk.
+
+    Parameters
+    ----------
+    experiment : DuckSeg.experiment_loader.Experiment
+        The experiment being edited; saved to
+        :meth:`~DuckSeg.experiment_loader.Experiment.corrected_roi_path`.
+    centers : list of float
+        Row center of each ROI band.
+    heights : list of float
+        Row height of each ROI band, aligned with ``centers``.
+    roi_shape : tuple of (int, int)
+        Shape of the mask image to generate.
+    """
     new_roi = np.zeros(roi_shape, dtype=np.uint8)
     for center, height in zip(centers, heights):
         s = int(round(center - height / 2))
@@ -26,11 +57,31 @@ def _save(experiment, centers, heights, roi_shape):
 
 
 def _load_original_ranges_and_shape(experiment):
+    """Return the ROI ranges and mask shape from the un-corrected original mask file."""
     roi = np.array(Image.open(experiment.ROI_path))
     return generate_ROI_ranges(roi), roi.shape
 
 
 def show_roi_editor(experiment):
+    """
+    Display an interactive ROI-boundary editor for one experiment.
+
+    Shows a frame-scrubbable view of the video with each detected ROI
+    range drawn as a translucent band. Per-band ▲/▼ buttons (and "▲ all"/
+    "▼ all" buttons affecting every band at once) nudge a band up or down
+    by one pixel; every nudge immediately saves a corrected mask via
+    :func:`_save`. "Reset" discards the correction and reverts to the
+    original mask's ranges.
+
+    Must be run in a Jupyter environment with
+    ``output.enable_custom_widget_manager()`` called and ``%matplotlib
+    widget`` active (see the example notebook's "ROI Editor" section).
+
+    Parameters
+    ----------
+    experiment : DuckSeg.experiment_loader.Experiment
+        The experiment whose ROI to edit.
+    """
     frames = experiment.frames_u8()
     ranges, roi_shape = _load_ranges_and_shape(experiment)
     original_ranges, _ = _load_original_ranges_and_shape(experiment)
@@ -145,5 +196,16 @@ def show_roi_editor(experiment):
 
 
 def show_roi_editors(experiments):
+    """
+    Display a :func:`show_roi_editor` widget for every experiment in a list.
+
+    Convenience wrapper used by the example notebook to open one editor
+    per experiment in a batch (``show_roi_editors(batch.experiments())``).
+
+    Parameters
+    ----------
+    experiments : list of DuckSeg.experiment_loader.Experiment
+        Experiments to display editors for.
+    """
     for exp in experiments:
         show_roi_editor(exp)

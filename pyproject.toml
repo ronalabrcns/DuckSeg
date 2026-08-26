@@ -12,4 +12,4 @@ classifiers = [ "Programming Language :: Python :: 3", "License :: OSI Approved 
 
 [project.urls]
 Homepage = "https://github.com/ronalabrcns/DuckSeg"
-"Google Colab" = "https://colab.research.google.com"
+"Google Colab" = "https://colab.research.google.com/github/ronalabrcns/DuckSeg/blob/main/notebooks/DuckSeg_Colab.ipynb"
