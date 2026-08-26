@@ -8,7 +8,15 @@ DuckSeg Documentation
    :alt: DuckSeg logo
    :align: left
    :width: 400px
-   :class: dark-light
+   :class: only-dark
+
+.. image:: /_static/duckseg_logo_white.png
+   :alt: DuckSeg logo
+   :align: left
+   :width: 400px
+   :class: only-light
+
+
 
 DuckSeg is a Python toolkit for quantifying protein recruitment to sites
 of laser-induced DNA damage in live-cell microscopy time-lapse videos. It
@@ -17,6 +25,7 @@ combines deep-learning cell segmentation (`CellSAM
 tracking and region-of-interest (ROI) brightness scoring, replacing what
 is otherwise a slow, manual, and reviewer-dependent image-analysis
 workflow.
+
 
 .. raw:: html
 
@@ -31,6 +40,8 @@ workflow.
        <img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-green">
      </a>
    </p>
+
+|
 
 .. admonition:: Try it now, no installation required
    :class: tip

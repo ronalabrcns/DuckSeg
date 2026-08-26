@@ -31,7 +31,7 @@ html_theme_options = {
     # makes the theme show only the image and drop the title text.
     "logo": {
         "image_light": "_static/duckseg_logo_nobg.png",
-        "image_dark": "_static/duckseg_logo_nobg.png",
+        "image_dark": "_static/duckseg_logo_white.png",
         "text": html_title,
     },
 }
