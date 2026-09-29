@@ -1,4 +1,6 @@
 import dataclasses
+import json
+import os
 from DuckSeg.experiment_loader import ExperimentBatch, Experiment, ExperimentType
 from typing import Optional
 import numpy as np
@@ -81,19 +83,113 @@ class BoundingBox:
     def range_to_relative(self, range: tuple[float]) -> tuple[float]:
         return (range[0] - self.x_min, range[1] - self.x_min)
         
-def evalute_batch(batch: ExperimentBatch, start = 1, transforms=None, use_cache=True):
+CACHE_NAME = "evaluator"
+CACHE_META_NAME = "evaluator_meta.json"
+CACHE_META_VERSION = 1
+
+
+def _roi_signature(experiment: Experiment) -> list[list[int]]:
+    """The laser-ROI lines as they are now (the corrected ROI if the ROI editor saved one)."""
+    return [[int(start), int(end)] for start, end in experiment.ROI_ranges()]
+
+
+def _read_cache_meta(experiment: Experiment) -> Optional[dict]:
+    try:
+        with open(experiment.cache_path(CACHE_META_NAME), 'r') as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return None
+
+
+def _write_cache_meta(experiment: Experiment):
+    experiment.ensure_cache_dir_exists()
+    meta = {
+        "version": CACHE_META_VERSION,
+        "roi_ranges": _roi_signature(experiment),
+        "max_len": experiment.max_len,
+    }
+    with open(experiment.cache_path(CACHE_META_NAME), 'w') as f:
+        json.dump(meta, f)
+
+
+def cache_status(experiment: Experiment) -> str:
+    """
+    Checks the cache of one experiment against its current state.
+    Returns one of:
+        'missing'         no cached evaluation
+        'valid'           cached with the same ROI lines and frame limit as now
+        'roi_changed'     the ROI lines were changed (ROI editor) since the cached run
+        'frames_changed'  batch.max_len differs from the cached run
+        'unverified'      cache made by an older DuckSeg that did not record the ROI lines
+    """
+    if not os.path.exists(experiment.cache_path(CACHE_NAME)):
+        return 'missing'
+    meta = _read_cache_meta(experiment)
+    if meta is None:
+        return 'unverified'
+    if meta.get("max_len") != experiment.max_len:
+        return 'frames_changed'
+    if meta.get("roi_ranges") != _roi_signature(experiment):
+        return 'roi_changed'
+    return 'valid'
+
+
+def _evaluate_with_cache(experiment: Experiment, transforms, use_cache: bool, reuse_segmentation: bool):
+    """
+    Returns (evaluator, message, changed). changed=True means the result differs from what is on disk.
+    """
+    def from_scratch(reason):
+        return evalute_experiment1(experiment, transforms=transforms), f"{reason}: segmented from scratch", True
+
+    if not use_cache:
+        return from_scratch("Cache not used")
+    status = cache_status(experiment)
+    if status == 'missing':
+        return from_scratch("No cache")
+    if status == 'frames_changed':
+        return from_scratch("Frame limit (max_len) changed since the cached run")
+    try:
+        cached = ExperimentEvaluator.load_experiment(experiment, warn_if_stale=False)
+    except Exception as e:
+        return from_scratch(f"Could not read cache ({e})")
+    if experiment.max_len is not None and len(cached.boxes) != experiment.max_len:
+        return from_scratch("Frame count differs from the cached run")
+
+    if status == 'valid':
+        return cached, "Loaded from cache (ROI lines unchanged)", False
+
+    reason = ("ROI lines changed since the cached run" if status == 'roi_changed'
+              else "Cache made by an older DuckSeg version (no ROI record)")
+    if not reuse_segmentation:
+        return from_scratch(reason)
+    # Segmentation (CellSAM) does not depend on the ROI, only the choice and tracking of laser-hit cells does
+    cached.retrack()
+    return cached, f"{reason}: reused segmentation, re-selected and re-tracked cells", True
+
+
+def evalute_batch(batch: ExperimentBatch, start = 1, transforms=None, use_cache=True, save_cache=True, reuse_segmentation=True):
+    """
+    Segments and tracks the cells of every experiment in the batch and returns all cell videos.
+
+    use_cache:  reuse results of a previous run if they are still valid. A cached result is used as-is
+                only if the ROI lines (incl. ROI editor corrections) and batch.max_len are unchanged.
+    save_cache: write new or updated results to disk (next to each video, in <video>_cache/).
+    reuse_segmentation: if only the ROI lines changed, keep the cached CellSAM segmentation and redo just
+                the ROI-dependent cell selection and tracking (fast). False re-segments from scratch.
+
+    The cache does not know about `transforms`: after changing them, run once with use_cache=False.
+    """
+    videos = []
     for experiment in batch.experiments():
         print(f"Evaluating {experiment.name}")
-        if use_cache:
-            try:
-                wt_eval = ExperimentEvaluator.load_experiment(experiment)
-                print("Loaded from cache")
-                continue
-            except:
-                pass
-        wt_eval = evalute_experiment1(experiment, transforms=transforms)
-        wt_eval.save(force=True)
-        
+        evaluator, message, changed = _evaluate_with_cache(experiment, transforms, use_cache, reuse_segmentation)
+        print(f"  {message}")
+        if save_cache and changed:
+            evaluator.save(force=True)
+            print("  Saved to cache")
+        videos += evaluator.cell_videos()
+    return videos
+
 def print_counts(arr):
     unique_elements, counts = np.unique(arr, return_counts=True)
     
@@ -322,12 +418,27 @@ class ExperimentEvaluator:
                 setattr(new, name, value)
         return new
 
+    def retrack(self):
+        """Redo the ROI-dependent steps (which cells were hit by the laser, per-cell tracking) on the current ROI."""
+        self.filter_starting_boxes()
+        self.create_cell_video_inds3()
+
     def save(self, force=False):
-        self.experiment.save_data("evaluator", self, force=force)
+        # don't pickle the raw video frames with the results, they are re-read from the video file
+        to_save = ExperimentEvaluator.from_other(self)
+        to_save.experiment = dataclasses.replace(self.experiment, loaded_video=None, loaded_video_u8=None, loaded_ROI=None, _ROI_ranges=None)
+        self.experiment.save_data(CACHE_NAME, to_save, force=force)
+        _write_cache_meta(self.experiment)
 
     @staticmethod
-    def load_experiment(experiment: Experiment):
-        old = experiment.load_data("evaluator")
+    def load_experiment(experiment: Experiment, warn_if_stale=True):
+        old = experiment.load_data(CACHE_NAME)
+        if old is None:
+            raise FileNotFoundError(f"No cached evaluation for {experiment.name}. Run evalute_batch first.")
+        if warn_if_stale:
+            status = cache_status(experiment)
+            if status in ('roi_changed', 'frames_changed', 'unverified'):
+                print(f"WARNING: cache of {experiment.name} is outdated ({status}). Run evalute_batch to update it.")
         old.experiment = experiment
         #old.cell_videos = ExperimentEvaluator.cell_videos
         return ExperimentEvaluator.from_other(old)
