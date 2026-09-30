@@ -85,8 +85,8 @@ def evalute_batch(batch: ExperimentBatch, start = 1, transforms=None, use_cache=
     """
     Segments the cells of every experiment (CellSAM) and returns all cell videos.
 
-    use_cache=True: reuse the saved segmentation (<video>_cache/evaluator). The current ROI lines
-    (incl. ROI editor corrections) are always applied when loading, so CellSAM never re-runs for ROI changes.
+    use_cache=True: reuse the saved segmentation (<video>_cache/evaluator). If the ROI lines were changed
+    (ROI editor), the cells are re-tracked once on the new lines and saved; CellSAM never re-runs for ROI changes.
     The cache does not know about `transforms`: after changing them, run once with use_cache=False.
     """
     videos = []
@@ -100,7 +100,7 @@ def evalute_batch(batch: ExperimentBatch, start = 1, transforms=None, use_cache=
             evaluator = evalute_experiment1(experiment, transforms=transforms)
             evaluator.save()
         else:
-            print("  Loaded from cache, applied current ROI lines")
+            print("  Loaded from cache")
         videos += evaluator.cell_videos()
     return videos
 
@@ -185,6 +185,8 @@ class ExperimentEvaluator:
     cell_image_lists: Optional[list[list[ndarray]]] = None
     cell_mask_lists: Optional[list[list[ndarray]]] = None
     cell_video_inds: Optional[list[list[int]]] = None
+    # ROI lines the tracking was done with (None in caches from older versions)
+    roi_ranges: Optional[list[tuple[int]]] = None
 
     def create_starting_boxes(self, threshold_value = 1, transforms=None):
         frame = self.experiment.first_frame_u8()
@@ -338,6 +340,7 @@ class ExperimentEvaluator:
         self.create_cell_video_inds3()
 
     def save(self):
+        self.roi_ranges = self.experiment.ROI_ranges()
         # don't pickle the raw video frames with the results, they are re-read from the video file
         to_save = ExperimentEvaluator.from_other(self)
         to_save.experiment = dataclasses.replace(self.experiment, loaded_video=None, loaded_video_u8=None, loaded_ROI=None, _ROI_ranges=None)
@@ -345,13 +348,20 @@ class ExperimentEvaluator:
 
     @staticmethod
     def load_experiment(experiment: Experiment):
-        """Loads the cached segmentation and applies the CURRENT ROI lines. Returns None if there is no cache."""
+        """
+        Loads the cached segmentation. Returns None if there is no cache.
+        If the ROI lines changed since the cache was saved, re-tracks the cells on the current lines once and saves.
+        """
         old = experiment.load_data("evaluator")
         if old is None:
             return None
         old.experiment = experiment
         evaluator = ExperimentEvaluator.from_other(old)
-        evaluator.retrack()
+        if evaluator.roi_ranges != experiment.ROI_ranges():
+            print(f"  {experiment.name}: ROI lines changed, re-tracking cells (CellSAM not re-run). "
+                  "Cell ids may now point to other cells: re-check manual outliers.")
+            evaluator.retrack()
+            evaluator.save()
         return evaluator
 
 def mask_diff(box1, mask1, box2, mask2):
