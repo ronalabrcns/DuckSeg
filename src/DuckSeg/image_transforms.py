@@ -6,7 +6,7 @@ transform's parameters and returns a ``Callable[[numpy.ndarray],
 numpy.ndarray]`` that applies the transform to a single frame. This makes
 them composable in the ``transforms`` list passed to
 :func:`DuckSeg.image_transformer.generate_masks_using_filters_and_transforms`
-and :func:`DuckSeg.experiment_evaluator.evalute_batch`, e.g.::
+and :func:`DuckSeg.experiment_evaluator.evaluate_batch`, e.g.::
 
     transforms = [convert_to_u8, set_brightness(20), threshold_image(20)]
 
@@ -14,6 +14,13 @@ and :func:`DuckSeg.experiment_evaluator.evalute_batch`, e.g.::
 frame rather than being a transform factory, since it has no tunable
 parameters.
 """
+
+__all__ = [
+    "convert_to_u8",
+    "threshold_image",
+    "adjust_contrast",
+    "set_brightness",
+]
 
 import numpy as np
 import cv2

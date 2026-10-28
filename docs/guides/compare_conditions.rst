@@ -29,7 +29,7 @@ in the legend.
    plot_brightness_scores(batches, score_type=ScoreType.Ratio,
                           range_modifier=5, cell_filter=cell_filter)
 
-Run :func:`~DuckSeg.experiment_evaluator.evalute_batch` for every batch
+Run :func:`~DuckSeg.experiment_evaluator.evaluate_batch` for every batch
 first (:doc:`caching`); the plots read the stored results. Colors are
 assigned in the order red, blue, green, purple, yellow, black, so at most
 six conditions can be plotted at once.
@@ -55,6 +55,24 @@ Score distribution over time
     each frame.
 
 ``cell_filter`` is optional in all of them; without it every cell is used.
-The plot functions only display the figure (with matplotlib's ``plt.show()``);
-they do not write an image file. Use the plot toolbar to save the figure, or
-:doc:`export the numbers <export_results>` and plot them yourself.
+
+Baseline correction and saving a figure
+=======================================
+
+All the mean-curve plots accept two options:
+
+``baseline_correct=True``
+    Subtract the first frame's value from the series of every cell, so
+    that all curves start at zero. The default (``False``) plots the raw
+    scores. ``plot_brightness_score_series`` accepts it too.
+
+``save_path="recruitment.png"``
+    Also save the figure to this file (300 dpi; the format follows the
+    extension, for example ``.png``, ``.pdf`` or ``.svg``). The figure is
+    still displayed. Not available for the interactive 3D plot.
+
+.. code-block:: python
+
+   plot_brightness_scores(batches, score_type=ScoreType.Ratio, range_modifier=5,
+                          cell_filter=cell_filter, baseline_correct=True,
+                          save_path="recruitment_ratio.png")

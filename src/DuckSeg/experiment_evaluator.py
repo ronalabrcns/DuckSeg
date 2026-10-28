@@ -2,14 +2,14 @@
 Cell segmentation, per-cell tracking, and laser-ROI brightness scoring.
 
 This is the core module of the DuckSeg pipeline. Its main entry point is
-:func:`evalute_batch`, which segments every frame of every experiment in a
+:func:`evaluate_batch`, which segments every frame of every experiment in a
 batch with CellSAM, tracks each detected cell across frames into a
 :class:`CellVideo`, and caches the result to disk. From there:
 
 - :class:`ExperimentEvaluator` drives the per-experiment segmentation and
   tracking (:meth:`~ExperimentEvaluator.create_starting_boxes` through
   :meth:`~ExperimentEvaluator.create_cell_video_inds3`) and is what
-  :func:`evalute_batch` saves/loads from each experiment's cache.
+  :func:`evaluate_batch` saves/loads from each experiment's cache.
 - :class:`CellVideo` is a single tracked cell's cropped frames/masks over
   time, together with the laser ROI row range(s) it overlaps. Its
   :meth:`~CellVideo.calculate_brightness` family of methods compares
@@ -22,9 +22,45 @@ batch with CellSAM, tracks each detected cell across frames into a
   CellSAM detections and cropping.
 
 Frame-level mask generation itself (:func:`generate_mask`,
-:func:`generate_mask_inner`) is CellSAM-backed and lazily loads the model
+``generate_mask_inner``) is CellSAM-backed and lazily loads the model
 into ``cellsam_model`` on first use.
 """
+
+__all__ = [
+    "ScoreType",
+    "BoundingBox",
+    "ExperimentEvaluator",
+    "CellVideo",
+    "evaluate_batch",
+    "evalute_batch",
+    "evalute_experiment1",
+    "mask_diff",
+    "generate_mask",
+    "generate_mask_transform",
+    "combine_cell_videos",
+    "combine_batch_videos",
+    "add_title_to_video",
+    "border_draw_mask_diff",
+    "draw_border",
+    "calc_brightness_score",
+    "calculate_brightness_score_for_experiments",
+    "calculate_brightness_score_for_videos",
+    "score_avg",
+    "plot_score_avg",
+    "plot_scores_avg",
+    "plot_score_double",
+    "plot_brightness_score",
+    "plot_brightness_score_double",
+    "plot_brightness_scores",
+    "plot_brightness_score_wt_ko",
+    "plot_brightness_score_series",
+    "plotly_time_series_distribution_3d",
+    "plot_all_scores",
+    "plot_all_vid_scores",
+    "plot_sorted_3d_lines",
+    "encode_mp4_temp",
+    "video_widget",
+]
 
 import dataclasses
 from copy import deepcopy
@@ -234,7 +270,7 @@ class BoundingBox:
         """
         return (range[0] - self.x_min, range[1] - self.x_min)
 
-def evalute_batch(batch: ExperimentBatch, start = 1, transforms=None, use_cache=True):
+def evaluate_batch(batch: ExperimentBatch, start = 1, transforms=None, use_cache=True):
     """
     Segment, track, and cache every experiment in a batch.
 
@@ -285,6 +321,9 @@ def evalute_batch(batch: ExperimentBatch, start = 1, transforms=None, use_cache=
             print("  Loaded from cache")
         videos += evaluator.cell_videos()
     return videos
+
+evalute_batch = evaluate_batch
+"""Deprecated misspelled alias of :func:`evaluate_batch`, kept so existing notebooks keep working."""
 
 def print_counts(arr):
     """Print each unique value in ``arr`` alongside its occurrence count. Debug helper."""
@@ -368,7 +407,7 @@ def generate_mask_transform(frame):
     """
     Segment a frame and return only its mask (drop the bounding boxes).
 
-    A convenience wrapper around :func:`generate_mask_inner` with the
+    A convenience wrapper around ``generate_mask_inner`` with the
     ``Callable[[numpy.ndarray], numpy.ndarray]`` signature expected by a
     transform pipeline, so it can be passed directly to
     :func:`DuckSeg.image_transformer.apply_transform`.
@@ -400,7 +439,7 @@ def generate_mask(frame, threshold_value = 1, bounding_boxes=None, transforms=No
         before masking. Ignored if ``transforms`` is provided.
     bounding_boxes : list, optional
         Previously known detection boxes to guide segmentation, forwarded
-        to :func:`generate_mask_inner`.
+        to ``generate_mask_inner``.
     transforms : list of Callable[[numpy.ndarray], numpy.ndarray], optional
         If given, these are applied to a copy of ``frame`` in order
         instead of the default thresholding step.
@@ -409,7 +448,7 @@ def generate_mask(frame, threshold_value = 1, bounding_boxes=None, transforms=No
     -------
     tuple of (numpy.ndarray, list)
         The labeled segmentation mask and detected bounding boxes; see
-        :func:`generate_mask_inner`.
+        ``generate_mask_inner``.
     """
     if transforms is not None:
         #print(f"Applying {len(transforms)} transforms")
@@ -442,7 +481,7 @@ class ExperimentEvaluator:
        :class:`CellVideo` objects.
 
     :func:`evalute_experiment1` runs stages 1-5 in this order;
-    :func:`evalute_batch` runs it per-experiment and persists the result
+    :func:`evaluate_batch` runs it per-experiment and persists the result
     via :meth:`save`/:meth:`load_experiment` so the notebook can reload
     results without re-running segmentation.
 
@@ -579,7 +618,7 @@ class ExperimentEvaluator:
 
         For each detected box in ``boxes``, crops the frame and mask to
         that box, resolves which mask label belongs to that specific cell
-        with :func:`get_mask_num` (in case multiple labels fall within one
+        with ``get_mask_num`` (in case multiple labels fall within one
         crop), and stores the masked cell image and boolean mask.
         Populates ``cell_image_lists`` and ``cell_mask_lists``. Must be
         called after :meth:`create_boxes`.
@@ -864,7 +903,7 @@ class ExperimentEvaluator:
         Load a previously cached :class:`ExperimentEvaluator` for an experiment.
 
         This is how the example notebook reloads segmentation/tracking
-        results computed by an earlier :func:`evalute_batch` call without
+        results computed by an earlier :func:`evaluate_batch` call without
         re-running CellSAM.
 
         Parameters
@@ -941,7 +980,7 @@ def evalute_experiment1(experiment: Experiment, limit = None, transforms=None):
     :meth:`~ExperimentEvaluator.create_boxes`,
     :meth:`~ExperimentEvaluator.create_masked_cells`, and
     :meth:`~ExperimentEvaluator.create_cell_video_inds3`. This is what
-    :func:`evalute_batch` calls per experiment; call it directly to
+    :func:`evaluate_batch` calls per experiment; call it directly to
     evaluate a single experiment without touching the on-disk cache.
 
     Parameters
@@ -1352,7 +1391,7 @@ class CellVideo:
         vals = self.calculate_brightness(range_modifier=range_modifier)
         diff = vals[:,1]/vals[:,0]
         return diff
-    def calculate_brightness_score(self, score: ScoreType, range_modifier=1):
+    def calculate_brightness_score(self, score: ScoreType, range_modifier=1, baseline_correct=False):
         """
         Compute the per-frame brightness score using the requested combination.
 
@@ -1363,6 +1402,9 @@ class CellVideo:
             ``ScoreType.Ratio`` for :meth:`calculate_brightness_ratio`.
         range_modifier : float, optional
             Forwarded to :meth:`calculate_brightness`.
+        baseline_correct : bool, optional
+            If ``True``, subtract the first frame's value from the whole
+            series so that it starts at zero. Default ``False`` (raw score).
 
         Returns
         -------
@@ -1375,11 +1417,14 @@ class CellVideo:
             If ``score`` is not a recognized :class:`ScoreType`.
         """
         if score == ScoreType.Diff:
-            return self.calculate_brightness_diff(range_modifier=range_modifier)
+            values = self.calculate_brightness_diff(range_modifier=range_modifier)
         elif score == ScoreType.Ratio:
-            return self.calculate_brightness_ratio(range_modifier=range_modifier)
+            values = self.calculate_brightness_ratio(range_modifier=range_modifier)
         else:
             raise AssertionError
+        if baseline_correct:
+            values = values - values[0]
+        return values
 
     def plot_brightness_ratio(self, range_modifier=1):
         """
@@ -1520,9 +1565,9 @@ def add_title_to_video(array, title: str, font_scale=1, thickness=2, height=30) 
     title : str
         Text to render, centered in the banner.
     font_scale : float, optional
-        Text scale, forwarded to :func:`text_to_ndarray`.
+        Text scale, forwarded to ``text_to_ndarray``.
     thickness : int, optional
-        Text stroke thickness, forwarded to :func:`text_to_ndarray`.
+        Text stroke thickness, forwarded to ``text_to_ndarray``.
     height : int, optional
         Height in pixels of the title banner.
 
@@ -1603,7 +1648,7 @@ def combine_batch_videos(batch: ExperimentBatch, extra_draw=None, cell_filter=la
     ----------
     batch : DuckSeg.experiment_loader.ExperimentBatch
         The batch to visualize. Requires every experiment to already have
-        a cached evaluator (i.e. :func:`evalute_batch` has been run).
+        a cached evaluator (i.e. :func:`evaluate_batch` has been run).
     extra_draw : Callable[[numpy.ndarray, CellVideo], None], optional
         Forwarded to :func:`combine_cell_videos`, e.g.
         :func:`border_draw_mask_diff`.
@@ -1631,7 +1676,7 @@ def combine_batch_videos(batch: ExperimentBatch, extra_draw=None, cell_filter=la
     #play_nb_video(vid)
     return vid
 
-def calc_brightness_score(batch: ExperimentBatch, score_type: ScoreType = ScoreType.Ratio, range_modifier=4, cell_filter=lambda x: True, experiment_type = None, print_progress=False):
+def calc_brightness_score(batch: ExperimentBatch, score_type: ScoreType = ScoreType.Ratio, range_modifier=4, cell_filter=lambda x: True, experiment_type = None, print_progress=False, baseline_correct=False):
     """
     Compute per-cell brightness scores for a batch, optionally restricted
     to one experimental group.
@@ -1640,7 +1685,7 @@ def calc_brightness_score(batch: ExperimentBatch, score_type: ScoreType = ScoreT
     ----------
     batch : DuckSeg.experiment_loader.ExperimentBatch
         The batch to score. Requires cached evaluators (see
-        :func:`evalute_batch`).
+        :func:`evaluate_batch`).
     score_type : ScoreType, optional
         How to combine in-ROI/out-of-ROI brightness; see
         :meth:`CellVideo.calculate_brightness_score`.
@@ -1657,6 +1702,10 @@ def calc_brightness_score(batch: ExperimentBatch, score_type: ScoreType = ScoreT
         otherwise every experiment in the batch is used.
     print_progress : bool, optional
         If ``True``, print each experiment's name as it's processed.
+    baseline_correct : bool, optional
+        If ``True``, subtract the value of the first frame from every
+        score series so that the curves start at zero. Default ``False``
+        (raw scores).
 
     Returns
     -------
@@ -1676,8 +1725,9 @@ def calc_brightness_score(batch: ExperimentBatch, score_type: ScoreType = ScoreT
             range_modifier=range_modifier,
             cell_filter=cell_filter,
             print_progress=print_progress,
+            baseline_correct=baseline_correct,
         )
-def calculate_brightness_score_for_experiments(experiments: list[Experiment], score_type: ScoreType = ScoreType.Ratio, range_modifier=4, cell_filter=lambda x: True, print_progress=False):
+def calculate_brightness_score_for_experiments(experiments: list[Experiment], score_type: ScoreType = ScoreType.Ratio, range_modifier=4, cell_filter=lambda x: True, print_progress=False, baseline_correct=False):
     """
     Compute per-cell brightness scores for an explicit list of experiments.
 
@@ -1699,6 +1749,10 @@ def calculate_brightness_score_for_experiments(experiments: list[Experiment], sc
         Predicate selecting which cells to include.
     print_progress : bool, optional
         If ``True``, print each experiment's name as it's processed.
+    baseline_correct : bool, optional
+        If ``True``, subtract the value of the first frame from every
+        score series so that the curves start at zero. Default ``False``
+        (raw scores).
 
     Returns
     -------
@@ -1716,11 +1770,11 @@ def calculate_brightness_score_for_experiments(experiments: list[Experiment], sc
         for cell_video in eval.cell_videos():
             if not cell_filter(cell_video):
                 continue
-            diffs.append(cell_video.calculate_brightness_score(score_type, range_modifier=range_modifier))
+            diffs.append(cell_video.calculate_brightness_score(score_type, range_modifier=range_modifier, baseline_correct=baseline_correct))
         all_diffs.append(diffs)
     return all_diffs
 
-def calculate_brightness_score_for_videos(videos: list[CellVideo], score_type: ScoreType = ScoreType.Ratio, range_modifier=4, cell_filter=lambda x: True, print_progress=False):
+def calculate_brightness_score_for_videos(videos: list[CellVideo], score_type: ScoreType = ScoreType.Ratio, range_modifier=4, cell_filter=lambda x: True, print_progress=False, baseline_correct=False):
     """
     Compute brightness scores for an explicit list of already-loaded cell videos.
 
@@ -1744,6 +1798,10 @@ def calculate_brightness_score_for_videos(videos: list[CellVideo], score_type: S
     print_progress : bool, optional
         Unused; accepted for signature symmetry with
         :func:`calc_brightness_score`.
+    baseline_correct : bool, optional
+        If ``True``, subtract the value of the first frame from every
+        score series so that the curves start at zero. Default ``False``
+        (raw scores).
 
     Returns
     -------
@@ -1756,7 +1814,7 @@ def calculate_brightness_score_for_videos(videos: list[CellVideo], score_type: S
     for vid in videos:
         if cell_filter(vid):
             vid_ids.append(vid.id)
-            diffs.append(vid.calculate_brightness_score(score_type, range_modifier=range_modifier))
+            diffs.append(vid.calculate_brightness_score(score_type, range_modifier=range_modifier, baseline_correct=baseline_correct))
     return vid_ids, diffs
 
 def score_avg(diffb):
@@ -1796,7 +1854,7 @@ def score_avg(diffb):
     std = np.std(diffs, ddof=1, axis=0)
     se = std/diffs.shape[0]**0.5
     return (mean, se)
-def plot_score_avg(diffs, show = True, color='blue', label=None):
+def plot_score_avg(diffs, show = True, color='blue', label=None, save_path=None):
     """
     Plot the mean +/- SEM of a collection of score time series.
 
@@ -1812,16 +1870,21 @@ def plot_score_avg(diffs, show = True, color='blue', label=None):
         Line and shaded-region color.
     label : str, optional
         Legend label for this series.
+    save_path : str, optional
+        If given, the figure is also saved to this file (the format follows
+        the extension, e.g. ``"recruitment.png"``) at 300 dpi.
     """
     mean, sem = score_avg(diffs)
     x = range(len(mean))
     plt.plot(x, mean, label=label, color=color)
     plt.fill_between(x, mean - sem, mean + sem, color=color, alpha=0.3)
     plt.legend()
+    if save_path is not None:
+        plt.savefig(save_path, dpi=300, bbox_inches="tight")
     if show:
         plt.show()
 
-def plot_brightness_score(batch: ExperimentBatch, score_type: ScoreType = ScoreType.Ratio, range_modifier=4, cell_filter=lambda x: True, color='blue'):
+def plot_brightness_score(batch: ExperimentBatch, score_type: ScoreType = ScoreType.Ratio, range_modifier=4, cell_filter=lambda x: True, color='blue', baseline_correct=False, save_path=None):
     """
     Plot the batch-averaged brightness score over time for a single batch.
 
@@ -1843,13 +1906,20 @@ def plot_brightness_score(batch: ExperimentBatch, score_type: ScoreType = ScoreT
         detected outliers.
     color : str, optional
         Line color.
+    baseline_correct : bool, optional
+        If ``True``, subtract the value of the first frame from every
+        score series so that the curves start at zero. Default ``False``
+        (raw scores).
+    save_path : str, optional
+        If given, the figure is also saved to this file (the format follows
+        the extension, e.g. ``"recruitment.png"``) at 300 dpi.
     """
-    diffs = calc_brightness_score(batch, score_type = score_type, range_modifier=range_modifier, cell_filter=cell_filter)
+    diffs = calc_brightness_score(batch, score_type = score_type, range_modifier=range_modifier, cell_filter=cell_filter, baseline_correct=baseline_correct)
     flattened = [diff for exp_diff in diffs for diff in exp_diff]
     plt.figure()
-    plot_score_avg(flattened, color=color)
+    plot_score_avg(flattened, color=color, save_path=save_path)
 
-def plot_brightness_score_double(ctrl: ExperimentBatch, cnnd: ExperimentBatch, score_type: ScoreType = ScoreType.Ratio, range_modifier=4, cell_filter=lambda x: True):
+def plot_brightness_score_double(ctrl: ExperimentBatch, cnnd: ExperimentBatch, score_type: ScoreType = ScoreType.Ratio, range_modifier=4, cell_filter=lambda x: True, baseline_correct=False, save_path=None):
     """
     Plot batch-averaged brightness scores of two batches overlaid for comparison.
 
@@ -1867,14 +1937,21 @@ def plot_brightness_score_double(ctrl: ExperimentBatch, cnnd: ExperimentBatch, s
     cell_filter : Callable[[CellVideo], bool], optional
         Predicate selecting which cells to include, applied to both
         batches.
+    baseline_correct : bool, optional
+        If ``True``, subtract the value of the first frame from every
+        score series so that the curves start at zero. Default ``False``
+        (raw scores).
+    save_path : str, optional
+        If given, the figure is also saved to this file (the format follows
+        the extension, e.g. ``"recruitment.png"``) at 300 dpi.
     """
-    ctrl_diffs = calc_brightness_score(ctrl, score_type = score_type, range_modifier=range_modifier, cell_filter=cell_filter)
-    cnnd_diffs = calc_brightness_score(cnnd, score_type = score_type, range_modifier=range_modifier, cell_filter=cell_filter)
+    ctrl_diffs = calc_brightness_score(ctrl, score_type = score_type, range_modifier=range_modifier, cell_filter=cell_filter, baseline_correct=baseline_correct)
+    cnnd_diffs = calc_brightness_score(cnnd, score_type = score_type, range_modifier=range_modifier, cell_filter=cell_filter, baseline_correct=baseline_correct)
     ctrl_flattened = [diff for exp_diff in ctrl_diffs for diff in exp_diff]
     cnnd_flattened = [diff for exp_diff in cnnd_diffs for diff in exp_diff]
-    plot_score_double(ctrl_flattened, ctrl.name, cnnd_flattened, cnnd.name)
+    plot_score_double(ctrl_flattened, ctrl.name, cnnd_flattened, cnnd.name, save_path=save_path)
 
-def plot_brightness_scores(batches: list[ExperimentBatch], score_type: ScoreType = ScoreType.Ratio, range_modifier=4, cell_filter=lambda x: True):
+def plot_brightness_scores(batches: list[ExperimentBatch], score_type: ScoreType = ScoreType.Ratio, range_modifier=4, cell_filter=lambda x: True, baseline_correct=False, save_path=None):
     """
     Plot batch-averaged brightness scores of any number of batches overlaid.
 
@@ -1893,16 +1970,23 @@ def plot_brightness_scores(batches: list[ExperimentBatch], score_type: ScoreType
     cell_filter : Callable[[CellVideo], bool], optional
         Predicate selecting which cells to include, applied to every
         batch.
+    baseline_correct : bool, optional
+        If ``True``, subtract the value of the first frame from every
+        score series so that the curves start at zero. Default ``False``
+        (raw scores).
+    save_path : str, optional
+        If given, the figure is also saved to this file (the format follows
+        the extension, e.g. ``"recruitment.png"``) at 300 dpi.
     """
     scores_names = []
     for batch in batches:
-        diffs = calc_brightness_score(batch, score_type = score_type, range_modifier=range_modifier, cell_filter=cell_filter)
+        diffs = calc_brightness_score(batch, score_type = score_type, range_modifier=range_modifier, cell_filter=cell_filter, baseline_correct=baseline_correct)
         flattened = [diff for exp_diff in diffs for diff in exp_diff]
         scores_names.append((flattened, batch.name))
-    plot_scores_avg(scores_names)
+    plot_scores_avg(scores_names, save_path=save_path)
 
 
-def plot_brightness_score_wt_ko(batch: ExperimentBatch, score_type: ScoreType = ScoreType.Ratio, range_modifier=4, cell_filter=lambda x: True, print_progress=False):
+def plot_brightness_score_wt_ko(batch: ExperimentBatch, score_type: ScoreType = ScoreType.Ratio, range_modifier=4, cell_filter=lambda x: True, print_progress=False, baseline_correct=False, save_path=None):
     """
     Plot WT vs. KO batch-averaged brightness scores from a single batch.
 
@@ -1926,14 +2010,21 @@ def plot_brightness_score_wt_ko(batch: ExperimentBatch, score_type: ScoreType = 
         groups.
     print_progress : bool, optional
         If ``True``, print each experiment's name as it's processed.
+    baseline_correct : bool, optional
+        If ``True``, subtract the value of the first frame from every
+        score series so that the curves start at zero. Default ``False``
+        (raw scores).
+    save_path : str, optional
+        If given, the figure is also saved to this file (the format follows
+        the extension, e.g. ``"recruitment.png"``) at 300 dpi.
     """
-    wt_diffs = calc_brightness_score(batch, score_type = score_type, range_modifier=range_modifier, cell_filter=cell_filter, experiment_type = ExperimentType.WT, print_progress=print_progress)
-    ko_diffs = calc_brightness_score(batch, score_type = score_type, range_modifier=range_modifier, cell_filter=cell_filter, experiment_type = ExperimentType.KO, print_progress=print_progress)
+    wt_diffs = calc_brightness_score(batch, score_type = score_type, range_modifier=range_modifier, cell_filter=cell_filter, experiment_type = ExperimentType.WT, print_progress=print_progress, baseline_correct=baseline_correct)
+    ko_diffs = calc_brightness_score(batch, score_type = score_type, range_modifier=range_modifier, cell_filter=cell_filter, experiment_type = ExperimentType.KO, print_progress=print_progress, baseline_correct=baseline_correct)
     wt_flattened = [diff for exp_diff in wt_diffs for diff in exp_diff]
     ko_flattened = [diff for exp_diff in ko_diffs for diff in exp_diff]
-    plot_score_double(wt_flattened, "wt", ko_flattened, "ko")
+    plot_score_double(wt_flattened, "wt", ko_flattened, "ko", save_path=save_path)
 
-def plot_score_double(score1, score1_name, score2, score2_name):
+def plot_score_double(score1, score1_name, score2, score2_name, save_path=None):
     """
     Plot two labeled score-series collections overlaid via :func:`plot_scores_avg`.
 
@@ -1947,12 +2038,15 @@ def plot_score_double(score1, score1_name, score2, score2_name):
         Second collection of per-cell score time series.
     score2_name : str
         Legend label for ``score2``.
+    save_path : str, optional
+        If given, the figure is also saved to this file (the format follows
+        the extension, e.g. ``"recruitment.png"``) at 300 dpi.
     """
-    plot_scores_avg([(score1, score1_name), (score2, score2_name)])
+    plot_scores_avg([(score1, score1_name), (score2, score2_name)], save_path=save_path)
     #plot_score_avg(score1, label = score1_name, show=False)
     #plot_score_avg(score2, label = score2_name, color = "red")
 
-def plot_scores_avg(scores_names):
+def plot_scores_avg(scores_names, save_path=None):
     """
     Plot several labeled score-series collections overlaid on one figure.
 
@@ -1962,12 +2056,16 @@ def plot_scores_avg(scores_names):
         ``(score_series_list, label)`` pairs, one per group to overlay.
         Up to 6 groups are supported (colors cycle through
         red/blue/green/purple/yellow/black).
+    save_path : str, optional
+        If given, the figure is also saved to this file (the format follows
+        the extension, e.g. ``"recruitment.png"``) at 300 dpi.
     """
     colors = ['red','blue','green','purple','yellow','black']
     for i, (score, name) in enumerate(scores_names):
-        plot_score_avg(score, label = name, show=i+1 == len(scores_names), color=colors[i])
+        is_last = i+1 == len(scores_names)
+        plot_score_avg(score, label = name, show=is_last, color=colors[i], save_path=save_path if is_last else None)
 
-def plot_brightness_score_series(batch: ExperimentBatch, score_type: ScoreType = ScoreType.Ratio, range_modifier=4, cell_filter=lambda x: True):
+def plot_brightness_score_series(batch: ExperimentBatch, score_type: ScoreType = ScoreType.Ratio, range_modifier=4, cell_filter=lambda x: True, baseline_correct=False):
     """
     Plot how the distribution of per-cell brightness scores evolves over time.
 
@@ -1988,10 +2086,14 @@ def plot_brightness_score_series(batch: ExperimentBatch, score_type: ScoreType =
         :meth:`CellVideo.calculate_brightness`.
     cell_filter : Callable[[CellVideo], bool], optional
         Predicate selecting which cells to include.
+    baseline_correct : bool, optional
+        If ``True``, subtract the value of the first frame from every
+        score series so that the curves start at zero. Default ``False``
+        (raw scores).
     """
     # what do I want to plot?
     # the distribution of the score over time
-    diffs = calc_brightness_score(batch, score_type = score_type, range_modifier=range_modifier, cell_filter=cell_filter)
+    diffs = calc_brightness_score(batch, score_type = score_type, range_modifier=range_modifier, cell_filter=cell_filter, baseline_correct=baseline_correct)
     flattened = [diff for exp_diff in diffs for diff in exp_diff]
     plotly_time_series_distribution_3d(flattened)
 

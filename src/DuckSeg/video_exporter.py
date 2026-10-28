@@ -2,11 +2,15 @@
 CSV export of per-cell laser-ROI brightness measurements.
 """
 
+__all__ = [
+    "export_cell_videos",
+]
+
 import pandas as pd
 from DuckSeg.experiment_evaluator import CellVideo
 
 
-def export_cell_videos(videos: list[CellVideo], output_path: str, range_modifier=1):
+def export_cell_videos(videos: list[CellVideo], output_path: str, range_modifier=1, baseline_correct=False):
     """
     Export per-frame in-ROI/out-of-ROI brightness for a set of cells to CSV.
 
@@ -28,6 +32,10 @@ def export_cell_videos(videos: list[CellVideo], output_path: str, range_modifier
     range_modifier : float, optional
         ROI width factor forwarded to
         :meth:`~DuckSeg.experiment_evaluator.CellVideo.calculate_brightness`.
+    baseline_correct : bool, optional
+        If ``True``, subtract the first frame's value from the ``_diff`` and
+        ``_ratio`` columns so that these curves start at zero. The
+        ``_normal`` and ``_ROI`` columns always stay raw. Default ``False``.
     """
     columns = {}
     for video in videos:
@@ -36,8 +44,13 @@ def export_cell_videos(videos: list[CellVideo], output_path: str, range_modifier
         lasered = vals[:, 1]
         columns[f'{video.id}_normal'] = normal
         columns[f'{video.id}_ROI'] = lasered
-        columns[f'{video.id}_diff'] = lasered - normal
-        columns[f'{video.id}_ratio'] = lasered / normal
+        diff = lasered - normal
+        ratio = lasered / normal
+        if baseline_correct:
+            diff = diff - diff[0]
+            ratio = ratio - ratio[0]
+        columns[f'{video.id}_diff'] = diff
+        columns[f'{video.id}_ratio'] = ratio
 
     df = pd.DataFrame(dict([(k, pd.Series(v)) for k, v in columns.items()]))
     df.to_csv(output_path, index=False)

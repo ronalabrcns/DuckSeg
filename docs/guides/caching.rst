@@ -6,13 +6,14 @@ Segmenting every frame is the slowest step, so it is done once and stored.
 
 .. code-block:: python
 
-   from DuckSeg.experiment_evaluator import evalute_batch
+   from DuckSeg.experiment_evaluator import evaluate_batch
 
-   vids = evalute_batch(batch, transforms=transforms)   # use_cache=True
+   vids = evaluate_batch(batch, transforms=transforms)   # use_cache=True
 
 The function returns the list of tracked
 :class:`~DuckSeg.experiment_evaluator.CellVideo` objects of the whole
-batch. (The spelling ``evalute`` is the actual function name.)
+batch. Older notebooks call it ``evalute_batch`` (sic); that name still
+works as an alias.
 
 Where results are stored
 ========================
@@ -45,7 +46,7 @@ Changed transforms
 
     .. code-block:: python
 
-       vids = evalute_batch(batch, transforms=transforms, use_cache=False)
+       vids = evaluate_batch(batch, transforms=transforms, use_cache=False)
 
 Load results later
 ==================
