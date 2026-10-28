@@ -40,10 +40,11 @@ The implementation is
 
 .. note::
 
-   The scores are the raw values. DuckSeg does **not** subtract the first
-   time point (baseline) or correct for photobleaching. If you need
-   curves that start at zero, subtract the first value of each series in
-   the exported CSV (see :doc:`guides/export_results`).
+   By default the scores are the raw values. Pass ``baseline_correct=True``
+   to the plot, score and export functions to subtract the first time
+   point of every cell so that the curves start at zero (see
+   :doc:`guides/compare_conditions` and :doc:`guides/export_results`).
+   Photobleaching is not corrected.
 
 The irradiated band and ``range_modifier``
 ------------------------------------------
@@ -125,8 +126,8 @@ Limitations
 
 * The irradiated stripe is assumed to be **horizontal** (a set of image
   rows).
-* Photobleaching and background variation are not corrected, and the
-  scores are not baseline-corrected.
+* Photobleaching and background variation are not corrected. Baseline
+  correction (subtracting the first frame) is optional.
 * Only the first stripe that intersects a cell is used for its score.
 * Tracking relies on mask similarity between consecutive frames, so
   fast-moving, overlapping or dividing nuclei may be mislinked. Review the

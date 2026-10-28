@@ -4,9 +4,19 @@ Batch-level orchestration for previewing the masking pipeline.
 The single entry point most users need is
 :func:`generate_masks_using_filters_and_transforms`, which is what the
 example notebook calls to preview cell masks for a subset of experiments
-and frames before committing to a full :func:`DuckSeg.experiment_evaluator.evalute_batch`
+and frames before committing to a full :func:`DuckSeg.experiment_evaluator.evaluate_batch`
 run. The remaining functions are the building blocks it is assembled from.
 """
+
+__all__ = [
+    "apply_experiment_filter",
+    "calculate_frame_indices",
+    "show_images_in_row",
+    "show_experiment_images",
+    "apply_transform",
+    "apply_transforms",
+    "generate_masks_using_filters_and_transforms",
+]
 
 import matplotlib.pyplot as plt
 from copy import deepcopy

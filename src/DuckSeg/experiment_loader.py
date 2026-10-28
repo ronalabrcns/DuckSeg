@@ -19,6 +19,19 @@ where the group label (``WT``/``KO``) anywhere in the file name is used by
 to split a batch into conditions.
 """
 
+__all__ = [
+    "nd2_u8_frames",
+    "nd2_frames",
+    "get_frame_u8",
+    "tiff_frames",
+    "tiff_u8_frames",
+    "generate_ROI_ranges",
+    "Experiment",
+    "ExperimentType",
+    "ExperimentBatch",
+    "experiment_batches",
+]
+
 import nd2
 import os
 import os.path

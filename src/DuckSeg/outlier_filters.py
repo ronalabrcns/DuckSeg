@@ -18,6 +18,15 @@ outlier IDs. New filters can be added following the same
 ``Callable[[CellVideo], bool]``-factory pattern.
 """
 
+__all__ = [
+    "outlier_vids",
+    "area",
+    "area_between",
+    "max_area_change_between_frames",
+    "max_total_area_change",
+    "id_starts_with",
+]
+
 import numpy as np
 
 def outlier_vids(vids, manual, filters):

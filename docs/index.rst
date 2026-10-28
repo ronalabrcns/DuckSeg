@@ -117,7 +117,7 @@ reference for every function and class involved. In brief:
     ExperimentBatch (load videos + ROI masks)
         -> roi_editor (optional manual ROI correction)
         -> image_transforms / image_transformer (preprocessing, tuned interactively)
-        -> evalute_batch -> ExperimentEvaluator (CellSAM segmentation + per-cell tracking)
+        -> evaluate_batch -> ExperimentEvaluator (CellSAM segmentation + per-cell tracking)
         -> cell_video_visualizer + outlier_filters (review and filter tracked cells)
         -> CellVideo.calculate_brightness_score + plot_brightness_score* (quantify + visualize)
         -> video_exporter (CSV export)
@@ -151,13 +151,13 @@ notebook (see :doc:`workflow` for the full walkthrough):
     from DuckSeg.experiment_loader import ExperimentBatch
     from DuckSeg.image_transforms import convert_to_u8, set_brightness, threshold_image
     from DuckSeg.experiment_evaluator import (
-        evalute_batch, ExperimentEvaluator, ScoreType, plot_brightness_score,
+        evaluate_batch, ExperimentEvaluator, ScoreType, plot_brightness_score,
     )
 
     batch = ExperimentBatch("MSH2", "/path/to/videos")
 
     transforms = [convert_to_u8, set_brightness(20), threshold_image(20)]
-    evalute_batch(batch, transforms=transforms)  # segment + track (slow, cached)
+    evaluate_batch(batch, transforms=transforms)  # segment + track (slow, cached)
 
     vids = [v for exp in batch.experiments()
               for v in ExperimentEvaluator.load_experiment(exp).cell_videos()]

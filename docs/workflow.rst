@@ -73,17 +73,17 @@ Key API:
 4. Segment and track cells across the batch
 ==============================================
 
-With a preprocessing pipeline chosen, :func:`~DuckSeg.experiment_evaluator.evalute_batch`
+With a preprocessing pipeline chosen, :func:`~DuckSeg.experiment_evaluator.evaluate_batch`
 runs CellSAM segmentation on every frame of every experiment and tracks
 each ROI-overlapping cell across time, caching the result to disk. This
 is the most compute-intensive step. ::
 
-    from DuckSeg.experiment_evaluator import evalute_batch
-    evalute_batch(batch, transforms=transforms)
+    from DuckSeg.experiment_evaluator import evaluate_batch
+    evaluate_batch(batch, transforms=transforms)
 
 Key API:
 
-- :func:`DuckSeg.experiment_evaluator.evalute_batch`
+- :func:`DuckSeg.experiment_evaluator.evaluate_batch`
 - :class:`DuckSeg.experiment_evaluator.ExperimentEvaluator` — see its
   class docstring for the full stage-by-stage pipeline
   (:meth:`~DuckSeg.experiment_evaluator.ExperimentEvaluator.create_starting_boxes`

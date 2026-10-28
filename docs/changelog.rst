@@ -10,6 +10,12 @@ Unreleased
   (:doc:`guides/caching`).
 * Interactive ROI editor (:mod:`DuckSeg.roi_editor`) and CSV export
   (:mod:`DuckSeg.video_exporter`).
+* Optional ``baseline_correct=True`` for the score, plot and CSV export
+  functions, and ``save_path=`` to save plot figures.
+* ``evaluate_batch`` is the correctly spelled name of ``evalute_batch``,
+  which remains as an alias.
+* Each module now defines its public API with ``__all__``; internal
+  helpers are no longer listed in the API reference.
 * New documentation site: installation, concepts, how-to guides,
   troubleshooting and a NumPy-style API reference.
 * Fixed ``evalute_batch`` failing because its result list was not

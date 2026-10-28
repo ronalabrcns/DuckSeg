@@ -34,12 +34,12 @@ Videos in the review grid cannot be encoded
 
 Changed the preprocessing but the results look the same
     Cached results do not notice new ``transforms``. Rerun
-    :func:`~DuckSeg.experiment_evaluator.evalute_batch` with
+    :func:`~DuckSeg.experiment_evaluator.evaluate_batch` with
     ``use_cache=False`` (:doc:`guides/caching`).
 
 ``ROI ranges modified after evaluate_batch!``
     A cell no longer touches any stripe of the current ROI. Rerun
-    :func:`~DuckSeg.experiment_evaluator.evalute_batch`; unchanged
+    :func:`~DuckSeg.experiment_evaluator.evaluate_batch`; unchanged
     segmentation is reused and the cells are re-tracked.
 
 The plots are missing a cell or show a gap

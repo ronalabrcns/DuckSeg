@@ -33,19 +33,18 @@ Column                    Content
 ``<id>_ratio``            ``ROI`` divided by ``normal``
 ========================  ======================================================
 
-These are the raw values behind the ``Diff`` and ``Ratio`` plots,
-computed with the ``range_modifier`` you pass.
+These are the values behind the ``Diff`` and ``Ratio`` plots, computed
+with the ``range_modifier`` you pass.
 
 Baseline-corrected curves
 =========================
 
-The values are not baseline-corrected. To make every curve start at zero,
-subtract its first value, for example with pandas:
+By default the values are raw. With ``baseline_correct=True`` the
+``_diff`` and ``_ratio`` columns are shifted so that each curve starts at
+zero (the first frame's value is subtracted). The ``_normal`` and ``_ROI``
+columns always stay raw.
 
 .. code-block:: python
 
-   import pandas as pd
-
-   df = pd.read_csv("output/brightness_scores.csv")
-   ratio_cols = [c for c in df.columns if c.endswith("_ratio")]
-   corrected = df[ratio_cols] - df[ratio_cols].iloc[0]
+   export_cell_videos(kept, "output/brightness_scores.csv",
+                      range_modifier=range_modifier, baseline_correct=True)

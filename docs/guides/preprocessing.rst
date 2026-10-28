@@ -72,6 +72,6 @@ a frame. A factory that returns such a function lets you add parameters:
 
    transforms = [convert_to_u8, gaussian_blur(1.5), set_brightness(20)]
 
-Use the final list in :func:`~DuckSeg.experiment_evaluator.evalute_batch`.
+Use the final list in :func:`~DuckSeg.experiment_evaluator.evaluate_batch`.
 Remember that cached results do not notice a change of transforms
 (:doc:`caching`).
