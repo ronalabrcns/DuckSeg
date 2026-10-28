@@ -1,6 +1,7 @@
 import numpy as np
 
 def outlier_vids(vids, manual, filters):
+    area_cache.clear()  # cell ids can point to other cells after the ROI lines changed
     outliers = set(manual)
     for vid in vids:
         for filter in filters:

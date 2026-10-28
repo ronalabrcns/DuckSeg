@@ -82,18 +82,28 @@ class BoundingBox:
         return (range[0] - self.x_min, range[1] - self.x_min)
         
 def evalute_batch(batch: ExperimentBatch, start = 1, transforms=None, use_cache=True):
+    """
+    Segments the cells of every experiment (CellSAM) and returns all cell videos.
+
+    use_cache=True: reuse the saved segmentation (<video>_cache/evaluator). If the ROI lines were changed
+    (ROI editor), the cells are re-tracked once on the new lines and saved; CellSAM never re-runs for ROI changes.
+    The cache does not know about `transforms`: after changing them, run once with use_cache=False.
+    """
+    videos = []
     for experiment in batch.experiments():
         print(f"Evaluating {experiment.name}")
-        if use_cache:
-            try:
-                wt_eval = ExperimentEvaluator.load_experiment(experiment)
-                print("Loaded from cache")
-                continue
-            except:
-                pass
-        wt_eval = evalute_experiment1(experiment, transforms=transforms)
-        wt_eval.save(force=True)
-        
+        evaluator = ExperimentEvaluator.load_experiment(experiment) if use_cache else None
+        if evaluator is not None and experiment.max_len is not None and len(evaluator.boxes) != experiment.max_len:
+            evaluator = None  # cached with a different number of frames (batch.max_len changed)
+        if evaluator is None:
+            print("  Segmenting from scratch")
+            evaluator = evalute_experiment1(experiment, transforms=transforms)
+            evaluator.save()
+        else:
+            print("  Loaded from cache")
+        videos += evaluator.cell_videos()
+    return videos
+
 def print_counts(arr):
     unique_elements, counts = np.unique(arr, return_counts=True)
     
@@ -175,6 +185,8 @@ class ExperimentEvaluator:
     cell_image_lists: Optional[list[list[ndarray]]] = None
     cell_mask_lists: Optional[list[list[ndarray]]] = None
     cell_video_inds: Optional[list[list[int]]] = None
+    # ROI lines the tracking was done with (None in caches from older versions)
+    roi_ranges: Optional[list[tuple[int]]] = None
 
     def create_starting_boxes(self, threshold_value = 1, transforms=None):
         frame = self.experiment.first_frame_u8()
@@ -322,15 +334,35 @@ class ExperimentEvaluator:
                 setattr(new, name, value)
         return new
 
-    def save(self, force=False):
-        self.experiment.save_data("evaluator", self, force=force)
+    def retrack(self):
+        """Redo the ROI-dependent steps (which cells were hit by the laser, per-cell tracking) on the current ROI."""
+        self.filter_starting_boxes()
+        self.create_cell_video_inds3()
+
+    def save(self):
+        self.roi_ranges = self.experiment.ROI_ranges()
+        # don't pickle the raw video frames with the results, they are re-read from the video file
+        to_save = ExperimentEvaluator.from_other(self)
+        to_save.experiment = dataclasses.replace(self.experiment, loaded_video=None, loaded_video_u8=None, loaded_ROI=None, _ROI_ranges=None)
+        self.experiment.save_data("evaluator", to_save, force=True)
 
     @staticmethod
     def load_experiment(experiment: Experiment):
+        """
+        Loads the cached segmentation. Returns None if there is no cache.
+        If the ROI lines changed since the cache was saved, re-tracks the cells on the current lines once and saves.
+        """
         old = experiment.load_data("evaluator")
+        if old is None:
+            return None
         old.experiment = experiment
-        #old.cell_videos = ExperimentEvaluator.cell_videos
-        return ExperimentEvaluator.from_other(old)
+        evaluator = ExperimentEvaluator.from_other(old)
+        if evaluator.roi_ranges != experiment.ROI_ranges():
+            print(f"  {experiment.name}: ROI lines changed, re-tracking cells (CellSAM not re-run). "
+                  "Cell ids may now point to other cells: re-check manual outliers.")
+            evaluator.retrack()
+            evaluator.save()
+        return evaluator
 
 def mask_diff(box1, mask1, box2, mask2):
     box1 = box1.as_indices()
