@@ -4,7 +4,7 @@ Pipeline Walkthrough
 
 This page walks through the DuckSeg pipeline stage by stage, in the same
 order used by the `example Colab notebook
-<https://colab.research.google.com/github/ronalabrcns/DuckSeg/blob/main/notebooks/DuckSeg_Colab.ipynb>`_.
+<https://colab.research.google.com/github/ronalabrcns/DuckSeg/blob/main/notebooks/DuckSeg_Example.ipynb>`_.
 Each stage links to the API reference entry for the functions and classes
 involved, so this page doubles as a map from "what the notebook does" to
 "where that lives in the code."

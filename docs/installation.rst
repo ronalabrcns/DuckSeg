@@ -14,11 +14,12 @@ Google Colab (no installation)
 ==============================
 
 Open the example notebook
-`DuckSeg_Colab.ipynb <https://colab.research.google.com/github/ronalabrcns/DuckSeg/blob/main/notebooks/DuckSeg_Colab.ipynb>`_
+`DuckSeg_Example.ipynb <https://colab.research.google.com/github/ronalabrcns/DuckSeg/blob/main/notebooks/DuckSeg_Example.ipynb>`_
 and choose a GPU runtime (*Runtime → Change runtime type*). The first cells
 clone the repository, install CellSAM and restart the kernel (wait for the
-session to reconnect before continuing). Your videos are read from Google
-Drive, so set ``data_dir`` in the notebook to the folder that holds them.
+session to reconnect before continuing). By default the notebook downloads
+an example dataset; set ``DATA_SOURCE = "drive"`` and ``DRIVE_DIR`` to
+analyse your own videos from Google Drive.
 
 CellSAM needs a DeepCell access token. Create a token on
 `users.deepcell.org <https://users.deepcell.org/>`_, store it in the Colab
