@@ -73,17 +73,17 @@ Key API:
 4. Segment and track cells across the batch
 ==============================================
 
-With a preprocessing pipeline chosen, :func:`~DuckSeg.experiment_evaluator.evalute_batch`
+With a preprocessing pipeline chosen, :func:`~DuckSeg.experiment_evaluator.evaluate_batch`
 runs CellSAM segmentation on every frame of every experiment and tracks
 each ROI-overlapping cell across time, caching the result to disk. This
 is the most compute-intensive step. ::
 
-    from DuckSeg.experiment_evaluator import evalute_batch
-    evalute_batch(batch, transforms=transforms)
+    from DuckSeg.experiment_evaluator import evaluate_batch
+    evaluate_batch(batch, transforms=transforms)
 
 Key API:
 
-- :func:`DuckSeg.experiment_evaluator.evalute_batch`
+- :func:`DuckSeg.experiment_evaluator.evaluate_batch`
 - :class:`DuckSeg.experiment_evaluator.ExperimentEvaluator` — see its
   class docstring for the full stage-by-stage pipeline
   (:meth:`~DuckSeg.experiment_evaluator.ExperimentEvaluator.create_starting_boxes`
@@ -123,7 +123,7 @@ Key API:
 The scientific readout: for every retained cell, compare fluorescence
 intensity inside the laser-irradiated ROI row range against the rest of
 the cell, over time, then aggregate and plot across a batch or across
-WT/KO groups. ::
+several batches. ::
 
     from DuckSeg.experiment_evaluator import ScoreType, plot_brightness_score
     plot_brightness_score(batch, score_type=ScoreType.Ratio,
@@ -136,7 +136,6 @@ Key API:
   ``calculate_brightness_score`` siblings
 - :class:`DuckSeg.experiment_evaluator.ScoreType`
 - :func:`DuckSeg.experiment_evaluator.plot_brightness_score`
-- :func:`DuckSeg.experiment_evaluator.plot_brightness_score_wt_ko`
 - :func:`DuckSeg.experiment_evaluator.plot_all_vid_scores`
 
 7. Export results

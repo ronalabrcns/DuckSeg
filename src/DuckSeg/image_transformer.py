@@ -4,9 +4,19 @@ Batch-level orchestration for previewing the masking pipeline.
 The single entry point most users need is
 :func:`generate_masks_using_filters_and_transforms`, which is what the
 example notebook calls to preview cell masks for a subset of experiments
-and frames before committing to a full :func:`DuckSeg.experiment_evaluator.evalute_batch`
+and frames before committing to a full :func:`DuckSeg.experiment_evaluator.evaluate_batch`
 run. The remaining functions are the building blocks it is assembled from.
 """
+
+__all__ = [
+    "apply_experiment_filter",
+    "calculate_frame_indices",
+    "show_images_in_row",
+    "show_experiment_images",
+    "apply_transform",
+    "apply_transforms",
+    "generate_masks_using_filters_and_transforms",
+]
 
 import matplotlib.pyplot as plt
 from copy import deepcopy
@@ -23,7 +33,7 @@ def apply_experiment_filter(experiments, filter):
     filter : None or str or list of int
         - ``None``: keep every experiment.
         - ``str``: keep experiments whose ``name`` contains this substring
-          (e.g. ``"KO"`` keeps every knock-out experiment).
+          (e.g. ``"siNT"`` keeps every experiment with this label in its name).
         - ``list of int``: keep only the experiments at these positions.
 
     Returns
@@ -212,7 +222,10 @@ def generate_masks_using_filters_and_transforms(batch, experiment_filter, frame_
     # apply experiment filter and frame indices
     experiments = apply_experiment_filter(batch.experiments(), experiment_filter)
     assert len(experiments) > 0, "No experiments after applying `experiment_filter`"
-    frame_indices = calculate_frame_indices(frame_filter, experiments[0].max_len-1)
+    n_frames = experiments[0].max_len
+    if n_frames is None:
+        n_frames = len(experiments[0].frames_u8())
+    frame_indices = calculate_frame_indices(frame_filter, n_frames-1)
     all_frames = []
     for experiment in experiments:
         frames = experiment.frames()

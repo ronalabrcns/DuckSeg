@@ -13,6 +13,11 @@ picked up transparently by the rest of the pipeline (segmentation,
 tracking, and brightness scoring) without any other code changes.
 """
 
+__all__ = [
+    "show_roi_editor",
+    "show_roi_editors",
+]
+
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from matplotlib.transforms import blended_transform_factory

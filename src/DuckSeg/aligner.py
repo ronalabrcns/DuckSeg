@@ -14,6 +14,21 @@ laser-irradiation time-lapse video to a common reference frame:
   brightness scoring.
 """
 
+__all__ = [
+    "calculate_brightness",
+    "adjust_brightness",
+    "align_frame_to_reference",
+    "align_and_adjust_frames",
+    "pad_then_transform_2d",
+    "transform_2d",
+    "correlation_metric",
+    "align_to_reference_bruteforce",
+    "calc_align_frames_transforms_bruteforce",
+    "align_frames_bruteforce",
+    "BilateralFilter",
+    "align_cell_video",
+]
+
 import cv2
 import numpy as np
 import itertools
@@ -22,11 +37,15 @@ def calculate_brightness(frame):
     """
     Calculate the average brightness of a grayscale frame.
     
-    Parameters:
-        frame (ndarray): The grayscale frame image.
-        
-    Returns:
-        float: The average brightness.
+    Parameters
+    ----------
+    frame : numpy.ndarray
+        The grayscale frame image.
+
+    Returns
+    -------
+    float
+        The average brightness.
     """
     return np.mean(frame)
 
@@ -34,38 +53,45 @@ def adjust_brightness(frame, target_brightness):
     """
     Adjust the brightness of a grayscale frame to match a target brightness.
     
-    Parameters:
-        frame (ndarray): The input grayscale frame.
-        target_brightness (float): The target average brightness level.
-        
-    Returns:
-        ndarray: The brightness-adjusted frame.
+    Parameters
+    ----------
+    frame : numpy.ndarray
+        The input grayscale frame.
+    target_brightness : float
+        The target average brightness level.
+
+    Returns
+    -------
+    numpy.ndarray
+        The brightness-adjusted frame.
     """
     current_brightness = calculate_brightness(frame)
     adjustment_factor = target_brightness / (current_brightness + 1e-6)
-    print(adjustment_factor)
     
     # Scale pixel values by the adjustment factor and clip to valid range
     adjusted_frame = cv2.convertScaleAbs(frame, alpha=adjustment_factor, beta=0)
     return adjusted_frame
 
-def align_frame_to_reference(reference_frame, frame, transform):
+def align_frame_to_reference(reference_frame, frame):
     """
     Aligns a frame to a reference frame using keypoints and homography.
 
-    Parameters:
-        reference_frame (ndarray): The reference grayscale frame.
-        frame (ndarray): The grayscale frame to be aligned to the reference frame.
+    Parameters
+    ----------
+    reference_frame : numpy.ndarray
+        The reference grayscale frame.
+    frame : numpy.ndarray
+        The grayscale frame to be aligned to the reference frame.
 
-    Returns:
-        aligned_frame (ndarray): The aligned version of the frame.
+    Returns
+    -------
+    numpy.ndarray
+        The aligned version of the frame.
     """
     # Use ORB to detect and describe features
     orb = cv2.ORB_create()
     keypoints_ref, descriptors_ref = orb.detectAndCompute(reference_frame, None)
     keypoints_frame, descriptors_frame = orb.detectAndCompute(frame, None)
-    print(keypoints_ref, descriptors_ref)
-    print(keypoints_frame, descriptors_frame)
 
     # Match features using the BFMatcher
     matcher = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
@@ -76,9 +102,7 @@ def align_frame_to_reference(reference_frame, frame, transform):
 
     # Extract matched keypoints
     points_ref = np.float32([keypoints_ref[m.queryIdx].pt for m in matches]).reshape(-1, 1, 2)
-    print(points_ref)
     points_frame = np.float32([keypoints_frame[m.trainIdx].pt for m in matches]).reshape(-1, 1, 2)
-    print(points_frame)
 
     # Find homography matrix
     homography, _ = cv2.findHomography(points_frame, points_ref, cv2.RANSAC, 5.0)
@@ -93,11 +117,15 @@ def align_and_adjust_frames(frames):
     """
     Aligns each frame in the list to the first frame and adjusts brightness to match the first frame.
 
-    Parameters:
-        frames (list of ndarray): List of grayscale frames to process.
+    Parameters
+    ----------
+    frames : list of numpy.ndarray
+        List of grayscale frames to process.
 
-    Returns:
-        list of ndarray: List of aligned and brightness-adjusted frames.
+    Returns
+    -------
+    list of numpy.ndarray
+        List of aligned and brightness-adjusted frames.
     """
     if not frames:
         return []
@@ -149,14 +177,21 @@ def transform_2d(image, shift0, shift1, rotation):
     """
     Transforms an image by applying translation and rotation in a single operation.
     
-    Args:
-        image (numpy.ndarray): Input image.
-        shift0 (float): Translation along the vertical axis (rows).
-        shift1 (float): Translation along the horizontal axis (columns).
-        rotation (float): Rotation angle in degrees (counter-clockwise).
-    
-    Returns:
-        numpy.ndarray: Transformed image.
+    Parameters
+    ----------
+    image : numpy.ndarray
+        Input image.
+    shift0 : float
+        Translation along the vertical axis (rows).
+    shift1 : float
+        Translation along the horizontal axis (columns).
+    rotation : float
+        Rotation angle in degrees (counter-clockwise).
+
+    Returns
+    -------
+    numpy.ndarray
+        Transformed image.
     """
     rows, cols = image.shape[:2]
     center = (cols / 2, rows / 2)
@@ -177,12 +212,17 @@ def correlation_metric(img1, img2):
     Calculate the similarity of two images based on correlation.
     If the images are not the same size, the smaller image is padded with zeros to match the larger image.
     
-    Parameters:
-        img1 (numpy.ndarray): The first image (grayscale or color).
-        img2 (numpy.ndarray): The second image (grayscale or color).
-    
-    Returns:
-        float: Correlation coefficient between the two images (value between -1 and 1).
+    Parameters
+    ----------
+    img1 : numpy.ndarray
+        The first (2D, grayscale) image.
+    img2 : numpy.ndarray
+        The second (2D, grayscale) image.
+
+    Returns
+    -------
+    float
+        Correlation coefficient between the two images (value between -1 and 1).
     """
 
     h1, w1 = img1.shape
@@ -245,7 +285,7 @@ def align_to_reference_bruteforce(reference, align, rotation_range=(-10,10), rot
         ``similarity_metric``.
     """
     trans_range0 = range(translation_range[0] + translation_base[0], translation_range[1] + translation_base[0], translation_step)
-    trans_range1 = range(translation_range[0] + translation_base[1], translation_range[1] + translation_base[0], translation_step)
+    trans_range1 = range(translation_range[0] + translation_base[1], translation_range[1] + translation_base[1], translation_step)
     rot_range = range(rotation_range[0] + rotation_base, rotation_range[1] + rotation_base, rotation_step)
     scores = []
     for (shift0, shift1, rot) in itertools.product(trans_range0, trans_range1, rot_range):

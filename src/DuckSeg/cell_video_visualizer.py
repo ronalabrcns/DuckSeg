@@ -15,6 +15,14 @@ homogenizing frame sizes and converting them to green-on-black PNG bytes
 (the :class:`Video` type the grid widget consumes).
 """
 
+__all__ = [
+    "Video",
+    "show_video_grid_jupyter",
+    "grayscale_to_green_png_bytes",
+    "min_max",
+    "normalize_videos_for_display",
+]
+
 import ipywidgets as widgets
 from IPython.display import display
 import dataclasses
@@ -431,5 +439,5 @@ def normalize_videos_for_display(vids: list['CellVideo'], range_modifier=4) -> l
     """
     vids = [vid.homogenize_size() for vid in vids]
     norms = [min_max([vid]) for vid in vids]
-    vids2 = [Video(id=vid.id,frames=[grayscale_to_green_png_bytes(frame, norm=norm) for frame in vid.video_with_ranges(range_modifier=4)], size=vid.frames[0].shape) for vid, norm in zip(vids, norms)]
+    vids2 = [Video(id=vid.id,frames=[grayscale_to_green_png_bytes(frame, norm=norm) for frame in vid.video_with_ranges(range_modifier=range_modifier)], size=vid.frames[0].shape) for vid, norm in zip(vids, norms)]
     return vids2
