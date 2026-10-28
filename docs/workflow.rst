@@ -123,7 +123,7 @@ Key API:
 The scientific readout: for every retained cell, compare fluorescence
 intensity inside the laser-irradiated ROI row range against the rest of
 the cell, over time, then aggregate and plot across a batch or across
-WT/KO groups. ::
+several batches. ::
 
     from DuckSeg.experiment_evaluator import ScoreType, plot_brightness_score
     plot_brightness_score(batch, score_type=ScoreType.Ratio,
@@ -136,7 +136,6 @@ Key API:
   ``calculate_brightness_score`` siblings
 - :class:`DuckSeg.experiment_evaluator.ScoreType`
 - :func:`DuckSeg.experiment_evaluator.plot_brightness_score`
-- :func:`DuckSeg.experiment_evaluator.plot_brightness_score_wt_ko`
 - :func:`DuckSeg.experiment_evaluator.plot_all_vid_scores`
 
 7. Export results

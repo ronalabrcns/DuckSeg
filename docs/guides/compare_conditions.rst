@@ -45,10 +45,6 @@ Two batches
     :func:`~DuckSeg.experiment_evaluator.plot_brightness_score_double`
     takes a control and a second batch.
 
-WT versus KO inside one batch
-    :func:`~DuckSeg.experiment_evaluator.plot_brightness_score_wt_ko`
-    splits one batch by ``_WT_`` and ``_KO_`` in the file names.
-
 Score distribution over time
     :func:`~DuckSeg.experiment_evaluator.plot_brightness_score_series`
     draws an interactive 3D surface of how the scores are distributed at
