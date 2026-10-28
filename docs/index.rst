@@ -125,24 +125,20 @@ reference for every function and class involved. In brief:
 Installation
 ============
 
-DuckSeg targets Python 3.10+. For a local installation with GPU support::
+DuckSeg targets Python 3.10+ and needs `CellSAM
+<https://github.com/vanvalenlab/cellSAM>`_ with a DeepCell access token.
+For a local installation:
+
+.. code-block:: bash
 
     git clone https://github.com/ronalabrcns/DuckSeg.git
     cd DuckSeg
-    python -m venv myenv
-    source myenv/bin/activate
-    python -m pip install -r requirements.txt
-    pip install git+https://github.com/vanvalenlab/cellSAM.git
     pip install -e .
+    pip install git+https://github.com/vanvalenlab/cellSAM.git
 
-Then launch Jupyter and open a notebook from ``notebooks/``::
-
-    python -m jupyter lab
-
-No local GPU or environment setup? Use the
-`Google Colab notebook <https://colab.research.google.com/github/ronalabrcns/DuckSeg/blob/main/notebooks/DuckSeg_Colab.ipynb>`_
-instead — it installs everything it needs, including CellSAM, in the
-first few cells.
+No local GPU? Use the `Google Colab notebook
+<https://colab.research.google.com/github/ronalabrcns/DuckSeg/blob/main/notebooks/DuckSeg_Colab.ipynb>`_.
+See :doc:`installation` for all details, including the access token.
 
 Quickstart
 ==========
@@ -168,7 +164,8 @@ notebook (see :doc:`workflow` for the full walkthrough):
 
     plot_brightness_score(batch, score_type=ScoreType.Ratio, range_modifier=4)
 
-Data expected on disk, per experiment, inside a batch directory::
+Data expected on disk, per experiment, inside a batch directory
+(details in :doc:`guides/data_preparation`)::
 
     <NAME>_<WT|KO>_<...>.nd2        # or .tif / .tiff
     <NAME>_<WT|KO>_<...>_ROI.tif    # binary laser-ROI mask, same frame size
@@ -191,8 +188,14 @@ DuckSeg is released under the MIT License.
    :caption: Contents:
    :hidden:
 
+   installation
    workflow
+   guides/index
+   concepts
+   troubleshooting
    modules
+   changelog
+   contributing
 
 Indices and tables
 ==================
