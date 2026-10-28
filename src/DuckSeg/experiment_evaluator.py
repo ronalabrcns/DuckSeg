@@ -1458,14 +1458,25 @@ def text_to_ndarray(text, array_size, dtype, font_scale=1, thickness=2, font_col
     """
     Generate a grayscale ndarray with specified text.
 
-    Parameters:
-        text (str): The text to be added to the ndarray.
-        array_size (tuple): Size of the array (height, width).
-        font_scale (int, optional): Scale of the font. Defaults to 1.
-        thickness (int, optional): Thickness of the font. Defaults to 2.
+    Parameters
+    ----------
+    text : str
+        The text to be added to the ndarray.
+    array_size : tuple of int
+        Size of the array ``(height, width)``.
+    dtype : numpy.dtype
+        Data type of the output array.
+    font_scale : int, optional
+        Scale of the font. Defaults to 1.
+    thickness : int, optional
+        Thickness of the font. Defaults to 2.
+    font_color : int, optional
+        Text intensity. Defaults to the maximum value of ``dtype``.
 
-    Returns:
-        ndarray: Grayscale image array with text.
+    Returns
+    -------
+    numpy.ndarray
+        Grayscale image array with text.
     """
     # Step 1: Create a blank grayscale image with the specified size
     blank_image = np.zeros((array_size[0], array_size[1]), dtype=dtype)
@@ -1539,13 +1550,19 @@ def draw_border(array, border_width, intensity=255):
     """
     Draw a border with configurable width around a 2D ndarray.
     
-    Parameters:
-        array (ndarray): The 2D array where the border will be drawn.
-        border_width (int): The width of the border.
-        intensity (int): The intensity (brightness) of the border. Default is 255 (white).
-        
-    Returns:
-        ndarray: The array with the border drawn.
+    Parameters
+    ----------
+    array : numpy.ndarray
+        The 2D array where the border will be drawn (modified in place).
+    border_width : int
+        The width of the border.
+    intensity : int, optional
+        The intensity (brightness) of the border. Default is 255 (white).
+
+    Returns
+    -------
+    numpy.ndarray
+        The array with the border drawn.
     """
     # Ensure the border width is valid
     rows, cols = array.shape
@@ -1983,13 +2000,20 @@ def plotly_time_series_distribution_3d(
     Creates an interactive 3D surface plot using Plotly showing how the distribution
     of values in time series evolves over time.
 
-    Parameters:
-    - list_of_series: list of lists or 2D NumPy array
-    - num_bins: number of histogram bins
-    - title: plot title
-    - xaxis_title, yaxis_title, zaxis_title: axis labels
-    - colorscale: Plotly color scale name
-    - density: whether to normalize histogram (density=True) or show raw counts
+    Parameters
+    ----------
+    list_of_series : list of list of float or numpy.ndarray
+        One score time series per row.
+    num_bins : int, optional
+        Number of histogram bins.
+    title : str, optional
+        Plot title.
+    xaxis_title, yaxis_title, zaxis_title : str, optional
+        Axis labels.
+    colorscale : str, optional
+        Plotly color scale name.
+    density : bool, optional
+        Whether to normalize the histogram (``True``) or show raw counts.
     """
 
     data = np.array(list_of_series)

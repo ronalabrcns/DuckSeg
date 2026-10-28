@@ -79,12 +79,17 @@ def adjust_contrast(alpha: float = 1.0, beta: float = 0.0):
       - cv2.convertScaleAbs for alpha >= 1 and beta >= 0
       - manual subtraction + saturation when beta < 0
 
-    Args:
-        alpha (float): Contrast multiplier.
-        beta (float): Brightness shift (can be positive or negative).
+    Parameters
+    ----------
+    alpha : float, optional
+        Contrast multiplier.
+    beta : float, optional
+        Brightness shift (can be positive or negative).
 
-    Returns:
-        Callable[[np.ndarray], np.ndarray]: A function to adjust a uint8 grayscale image.
+    Returns
+    -------
+    Callable[[numpy.ndarray], numpy.ndarray]
+        A function to adjust a uint8 grayscale image.
     """
     def adjust(image: np.ndarray) -> np.ndarray:
         if beta >= 0:

@@ -170,7 +170,7 @@ def generate_ROI_ranges(roi) -> list[tuple[float]]:
                 in_roi = True
                 last_start = i
     if in_roi:
-        ranges.append((last_start, roi.shape[1]))
+        ranges.append((last_start, roi.shape[0]))
     return ranges
 
 @dataclasses.dataclass
@@ -522,13 +522,13 @@ class ExperimentBatch:
         return sorted(experiments, key=lambda exp: exp.name)
         
     def ko_experiment(self, i: int):
-        """Return the KO experiment whose path ends in ``"00{i}"``."""
+        """Return the KO experiment whose name (file name without extension) ends in ``"00{i}"``."""
         end = f"00{i}"
-        return [e for e in self.experiments() if "_KO_" in e.path and e.path.endswith(end)][0]
+        return [e for e in self.experiments() if "_KO_" in e.name and e.name.endswith(end)][0]
     def wt_experiment(self, i: int):
-        """Return the WT experiment whose path ends in ``"00{i}"``."""
+        """Return the WT experiment whose name (file name without extension) ends in ``"00{i}"``."""
         end = f"00{i}"
-        return [e for e in self.experiments() if "_WT_" in e.path and e.path.endswith(end)][0]
+        return [e for e in self.experiments() if "_WT_" in e.name and e.name.endswith(end)][0]
     def wt_experiments(self):
         """Return every experiment whose path contains ``"_WT_"``."""
         return [e for e in self.experiments() if "_WT_" in e.path]
