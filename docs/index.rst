@@ -150,19 +150,23 @@ notebook (see :doc:`workflow` for the full walkthrough):
 
     from DuckSeg.experiment_loader import ExperimentBatch
     from DuckSeg.image_transforms import convert_to_u8, set_brightness, threshold_image
-    from DuckSeg.experiment_evaluator import (
-        evaluate_batch, ExperimentEvaluator, ScoreType, plot_brightness_score,
-    )
+    from DuckSeg.experiment_evaluator import evaluate_batch, plot_brightness_score, ScoreType
+    from DuckSeg.outlier_filters import area_between, outlier_vids
+    from DuckSeg.video_exporter import export_cell_videos
 
     batch = ExperimentBatch("MSH2", "/path/to/videos")
 
     transforms = [convert_to_u8, set_brightness(20), threshold_image(20)]
-    evaluate_batch(batch, transforms=transforms)  # segment + track (slow, cached)
+    vids = evaluate_batch(batch, transforms=transforms)    # segment + track (slow, cached)
 
-    vids = [v for exp in batch.experiments()
-              for v in ExperimentEvaluator.load_experiment(exp).cell_videos()]
+    outliers = outlier_vids(vids, manual=set(), filters=[area_between(10, 5000)])
+    cell_filter = lambda vid: vid.id not in outliers
 
-    plot_brightness_score(batch, score_type=ScoreType.Ratio, range_modifier=4)
+    plot_brightness_score(batch, score_type=ScoreType.Ratio, range_modifier=4,
+                          cell_filter=cell_filter, baseline_correct=True,
+                          save_path="recruitment.png")
+    export_cell_videos([v for v in vids if cell_filter(v)], "brightness_scores.csv",
+                       range_modifier=4)
 
 Data expected on disk, per experiment, inside a batch directory
 (details in :doc:`guides/data_preparation`)::

@@ -78,6 +78,29 @@ import matplotlib.pyplot as plt
 
 cellsam_model = None
 
+def play_nb_video(frames):
+    """
+    Play a list of frames as an inline notebook animation.
+
+    Used by :meth:`CellVideo.play_video` and
+    :meth:`CellVideo.play_video_with_ranges`.
+
+    Parameters
+    ----------
+    frames : list of numpy.ndarray
+        The frames to play, in order.
+    """
+    import matplotlib.animation as animation
+    from IPython.display import HTML, display
+    fig, ax = plt.subplots()
+    im = ax.imshow(frames[0])
+    plt.close()
+    def update(frame):
+        im.set_data(frame)
+        return [im]
+    ani = animation.FuncAnimation(fig, update, frames=frames, blit=True, interval=50)
+    display(HTML(ani.to_jshtml()))
+
 
 class ScoreType(enum.Enum):
     """
@@ -883,18 +906,34 @@ class ExperimentEvaluator:
                 setattr(new, name, value)
         return new
 
-    def save(self, force=False):
+    def retrack(self):
+        """
+        Redo the ROI-dependent steps on the experiment's current ROI lines.
+
+        Re-runs :meth:`filter_starting_boxes` and
+        :meth:`create_cell_video_inds3` on the stored segmentation, so
+        CellSAM is not run again. Called by :meth:`load_experiment` when
+        the ROI lines changed since the cache was saved (e.g. after using
+        the ROI editor).
+        """
+        self.filter_starting_boxes()
+        self.create_cell_video_inds3()
+
+    def save(self):
         """
         Persist this evaluator to the experiment's on-disk cache.
 
-        Parameters
-        ----------
-        force : bool, optional
-            If ``False`` (default), raises rather than overwriting an
-            existing cached result. See
-            :meth:`DuckSeg.experiment_loader.Experiment.save_data`.
+        Records the ROI lines the tracking was done with (``roi_ranges``)
+        so that :meth:`load_experiment` can detect later ROI changes, and
+        overwrites any existing cache entry. The raw video frames are not
+        stored; they are re-read from the video file. See
+        :meth:`DuckSeg.experiment_loader.Experiment.save_data`.
         """
-        self.experiment.save_data("evaluator", self, force=force)
+        self.roi_ranges = self.experiment.ROI_ranges()
+        # don't pickle the raw video frames with the results, they are re-read from the video file
+        to_save = ExperimentEvaluator.from_other(self)
+        to_save.experiment = dataclasses.replace(self.experiment, loaded_video=None, loaded_video_u8=None, loaded_ROI=None, _ROI_ranges=None)
+        self.experiment.save_data("evaluator", to_save, force=True)
 
     @staticmethod
     def load_experiment(experiment: Experiment):
@@ -915,9 +954,12 @@ class ExperimentEvaluator:
 
         Returns
         -------
-        ExperimentEvaluator
+        ExperimentEvaluator or None
             The cached evaluator, rebuilt via :meth:`from_other` to ensure
-            its methods match the currently loaded class definition.
+            its methods match the currently loaded class definition, or
+            ``None`` if the experiment has no cache yet. If the ROI lines
+            changed since the cache was saved, the cells are re-tracked
+            once (:meth:`retrack`) and the cache is updated.
         """
         old = experiment.load_data("evaluator")
         if old is None:
