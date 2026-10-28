@@ -46,6 +46,7 @@ __all__ = [
     "calculate_brightness_score_for_experiments",
     "calculate_brightness_score_for_videos",
     "score_avg",
+    "DEFAULT_COLORS",
     "plot_score_avg",
     "plot_scores_avg",
     "plot_score_double",
@@ -321,8 +322,9 @@ def evaluate_batch(batch: ExperimentBatch, start = 1, transforms=None, use_cache
         saved (e.g. with the ROI editor), the cells are re-tracked once on
         the new lines and the cache is updated; CellSAM is not re-run. The
         cache does not know about ``transforms``: after changing them, run
-        once with ``use_cache=False``. A cache saved with a different
-        number of frames than ``batch.max_len`` is also discarded.
+        once with ``use_cache=False``. If ``batch.max_len`` was lowered,
+        the cached result is cut to the new length (CellSAM is not re-run);
+        only a cache with fewer frames than now needed is segmented again.
 
     Returns
     -------
@@ -333,8 +335,8 @@ def evaluate_batch(batch: ExperimentBatch, start = 1, transforms=None, use_cache
     for experiment in batch.experiments():
         print(f"Evaluating {experiment.name}")
         evaluator = ExperimentEvaluator.load_experiment(experiment) if use_cache else None
-        if evaluator is not None and experiment.max_len is not None and len(evaluator.boxes) != experiment.max_len:
-            evaluator = None  # cached with a different number of frames (batch.max_len changed)
+        if evaluator is not None and len(evaluator.boxes) < experiment.frame_count():
+            evaluator = None  # cached with fewer frames than now needed (batch.max_len was raised)
         if evaluator is None:
             print("  Segmenting from scratch")
             evaluator = evalute_experiment1(experiment, transforms=transforms)
@@ -966,9 +968,19 @@ class ExperimentEvaluator:
             return None
         old.experiment = experiment
         evaluator = ExperimentEvaluator.from_other(old)
+        changed = False
+        n_frames = experiment.frame_count()
+        if len(evaluator.boxes) > n_frames:
+            # batch.max_len was lowered: cut the stored segmentation instead of re-running CellSAM
+            print(f"  {experiment.name}: using the first {n_frames} of {len(evaluator.boxes)} cached frames.")
+            for field in ("boxes", "masks", "cell_image_lists", "cell_mask_lists"):
+                setattr(evaluator, field, getattr(evaluator, field)[:n_frames])
+            changed = True
         if evaluator.roi_ranges != experiment.ROI_ranges():
             print(f"  {experiment.name}: ROI lines changed, re-tracking cells (CellSAM not re-run). "
                   "Cell ids may now point to other cells: re-check manual outliers.")
+            changed = True
+        if changed:
             evaluator.retrack()
             evaluator.save()
         return evaluator
@@ -1879,12 +1891,38 @@ def score_avg(diffb):
             print(f"Diffa {diffa}")
             print(f"Diffb {diffb}")
             raise
-    diffs = np.vstack([diffa for diffa in diffb if not np.any(np.isnan(diffa))])
+    valid = [diffa for diffa in diffb if not np.any(np.isnan(diffa))]
+    if not valid:
+        raise ValueError("No cells left to plot: every cell was filtered out or has NaN scores "
+                         "(check cell_filter, the ROI position and range_modifier).")
+    if len({len(diffa) for diffa in valid}) > 1:
+        raise ValueError("The videos have different numbers of frames. Set batch.max_len to the "
+                         "shortest one, e.g. batch.max_len = min(e.frame_count() for e in batch.experiments()).")
+    diffs = np.vstack(valid)
     mean = np.mean(diffs, axis=0)
     std = np.std(diffs, ddof=1, axis=0)
     se = std/diffs.shape[0]**0.5
     return (mean, se)
-def plot_score_avg(diffs, show = True, color='blue', label=None, save_path=None):
+
+DEFAULT_COLORS = ['#0072B2', '#D55E00', '#009E73', '#CC79A7', '#E69F00', '#56B4E9', '#000000', '#F0E442']
+"""Default line colors (Okabe-Ito, colorblind-safe), used in order and repeated for more groups."""
+
+def _score_label(score_type: ScoreType, baseline_correct: bool) -> str:
+    """Return a y-axis label for a score type."""
+    label = 'Brightness ratio (ROI / rest)' if score_type == ScoreType.Ratio else 'Brightness difference (ROI − rest)'
+    return label + (', baseline-corrected' if baseline_correct else '')
+
+def _resolve_colors(colors, names):
+    """Turn ``colors`` (None, a color, a list, or a dict keyed by name) into one color per name."""
+    if colors is None:
+        colors = DEFAULT_COLORS
+    if isinstance(colors, str):
+        colors = [colors]
+    if isinstance(colors, dict):
+        return [colors.get(name, DEFAULT_COLORS[i % len(DEFAULT_COLORS)]) for i, name in enumerate(names)]
+    return [colors[i % len(colors)] for i in range(len(names))]
+
+def plot_score_avg(diffs, show = True, color=DEFAULT_COLORS[0], label=None, save_path=None, xlabel='Frame', ylabel=None, title=None):
     """
     Plot the mean +/- SEM of a collection of score time series.
 
@@ -1897,24 +1935,37 @@ def plot_score_avg(diffs, show = True, color='blue', label=None, save_path=None)
         ``False`` when overlaying multiple series on one figure (see
         :func:`plot_scores_avg`).
     color : str, optional
-        Line and shaded-region color.
+        Line and shaded-region color (any matplotlib color).
     label : str, optional
-        Legend label for this series.
+        Legend label for this series; the number of cells is appended.
     save_path : str, optional
         If given, the figure is also saved to this file (the format follows
         the extension, e.g. ``"recruitment.png"``) at 300 dpi.
+    xlabel, ylabel, title : str, optional
+        Axis labels and figure title.
     """
     mean, sem = score_avg(diffs)
+    n = sum(1 for d in diffs if not np.any(np.isnan(d)))
     x = range(len(mean))
-    plt.plot(x, mean, label=label, color=color)
-    plt.fill_between(x, mean - sem, mean + sem, color=color, alpha=0.3)
-    plt.legend()
+    ax = plt.gca()
+    ax.plot(x, mean, label=f'{label} (n={n})' if label is not None else f'n={n}', color=color, linewidth=2)
+    ax.fill_between(x, mean - sem, mean + sem, color=color, alpha=0.25, linewidth=0)
+    ax.set_xlabel(xlabel)
+    if ylabel is not None:
+        ax.set_ylabel(ylabel)
+    if title is not None:
+        ax.set_title(title)
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.grid(True, alpha=0.3, linewidth=0.5)
+    ax.margins(x=0)
+    ax.legend(frameon=False)
     if save_path is not None:
         plt.savefig(save_path, dpi=300, bbox_inches="tight")
     if show:
         plt.show()
 
-def plot_brightness_score(batch: ExperimentBatch, score_type: ScoreType = ScoreType.Ratio, range_modifier=4, cell_filter=lambda x: True, color='blue', baseline_correct=False, save_path=None):
+def plot_brightness_score(batch: ExperimentBatch, score_type: ScoreType = ScoreType.Ratio, range_modifier=4, cell_filter=lambda x: True, color=DEFAULT_COLORS[0], baseline_correct=False, save_path=None, title=None):
     """
     Plot the batch-averaged brightness score over time for a single batch.
 
@@ -1935,7 +1986,7 @@ def plot_brightness_score(batch: ExperimentBatch, score_type: ScoreType = ScoreT
         Predicate selecting which cells to include, e.g. to exclude
         detected outliers.
     color : str, optional
-        Line color.
+        Line color (any matplotlib color, e.g. ``"tab:red"`` or ``"#D55E00"``).
     baseline_correct : bool, optional
         If ``True``, subtract the value of the first frame from every
         score series so that the curves start at zero. Default ``False``
@@ -1943,13 +1994,16 @@ def plot_brightness_score(batch: ExperimentBatch, score_type: ScoreType = ScoreT
     save_path : str, optional
         If given, the figure is also saved to this file (the format follows
         the extension, e.g. ``"recruitment.png"``) at 300 dpi.
+    title : str, optional
+        Figure title. Defaults to the batch name.
     """
     diffs = calc_brightness_score(batch, score_type = score_type, range_modifier=range_modifier, cell_filter=cell_filter, baseline_correct=baseline_correct)
     flattened = [diff for exp_diff in diffs for diff in exp_diff]
-    plt.figure()
-    plot_score_avg(flattened, color=color, save_path=save_path)
+    plt.figure(figsize=(6, 4))
+    plot_score_avg(flattened, color=color, label=batch.name, save_path=save_path,
+                   ylabel=_score_label(score_type, baseline_correct), title=batch.name if title is None else title)
 
-def plot_brightness_score_double(ctrl: ExperimentBatch, cnnd: ExperimentBatch, score_type: ScoreType = ScoreType.Ratio, range_modifier=4, cell_filter=lambda x: True, baseline_correct=False, save_path=None):
+def plot_brightness_score_double(ctrl: ExperimentBatch, cnnd: ExperimentBatch, score_type: ScoreType = ScoreType.Ratio, range_modifier=4, cell_filter=lambda x: True, baseline_correct=False, save_path=None, colors=None, title=None):
     """
     Plot batch-averaged brightness scores of two batches overlaid for comparison.
 
@@ -1974,19 +2028,25 @@ def plot_brightness_score_double(ctrl: ExperimentBatch, cnnd: ExperimentBatch, s
     save_path : str, optional
         If given, the figure is also saved to this file (the format follows
         the extension, e.g. ``"recruitment.png"``) at 300 dpi.
+    colors : list of str or dict of str to str, optional
+        Line colors, in batch order or keyed by batch name. Defaults to
+        :data:`DEFAULT_COLORS`.
+    title : str, optional
+        Figure title.
     """
     ctrl_diffs = calc_brightness_score(ctrl, score_type = score_type, range_modifier=range_modifier, cell_filter=cell_filter, baseline_correct=baseline_correct)
     cnnd_diffs = calc_brightness_score(cnnd, score_type = score_type, range_modifier=range_modifier, cell_filter=cell_filter, baseline_correct=baseline_correct)
     ctrl_flattened = [diff for exp_diff in ctrl_diffs for diff in exp_diff]
     cnnd_flattened = [diff for exp_diff in cnnd_diffs for diff in exp_diff]
-    plot_score_double(ctrl_flattened, ctrl.name, cnnd_flattened, cnnd.name, save_path=save_path)
+    plot_score_double(ctrl_flattened, ctrl.name, cnnd_flattened, cnnd.name, save_path=save_path, colors=colors,
+                      ylabel=_score_label(score_type, baseline_correct), title=title)
 
-def plot_brightness_scores(batches: list[ExperimentBatch], score_type: ScoreType = ScoreType.Ratio, range_modifier=4, cell_filter=lambda x: True, baseline_correct=False, save_path=None):
+def plot_brightness_scores(batches: list[ExperimentBatch], score_type: ScoreType = ScoreType.Ratio, range_modifier=4, cell_filter=lambda x: True, baseline_correct=False, save_path=None, colors=None, title=None):
     """
     Plot batch-averaged brightness scores of any number of batches overlaid.
 
-    Generalizes :func:`plot_brightness_score_double` to more than two
-    batches (up to the 6 colors :func:`plot_scores_avg` cycles through).
+    Generalizes :func:`plot_brightness_score_double` to any number of
+    batches.
 
     Parameters
     ----------
@@ -2007,16 +2067,23 @@ def plot_brightness_scores(batches: list[ExperimentBatch], score_type: ScoreType
     save_path : str, optional
         If given, the figure is also saved to this file (the format follows
         the extension, e.g. ``"recruitment.png"``) at 300 dpi.
+    colors : list of str or dict of str to str, optional
+        Line colors, in batch order (``["black", "tab:red"]``) or keyed by
+        batch name (``{"EV_siNT": "black"}``). Defaults to
+        :data:`DEFAULT_COLORS`; a shorter list is repeated.
+    title : str, optional
+        Figure title.
     """
     scores_names = []
     for batch in batches:
         diffs = calc_brightness_score(batch, score_type = score_type, range_modifier=range_modifier, cell_filter=cell_filter, baseline_correct=baseline_correct)
         flattened = [diff for exp_diff in diffs for diff in exp_diff]
         scores_names.append((flattened, batch.name))
-    plot_scores_avg(scores_names, save_path=save_path)
+    plot_scores_avg(scores_names, save_path=save_path, colors=colors,
+                    ylabel=_score_label(score_type, baseline_correct), title=title)
 
 
-def plot_score_double(score1, score1_name, score2, score2_name, save_path=None):
+def plot_score_double(score1, score1_name, score2, score2_name, save_path=None, colors=None, ylabel=None, title=None):
     """
     Plot two labeled score-series collections overlaid via :func:`plot_scores_avg`.
 
@@ -2033,12 +2100,12 @@ def plot_score_double(score1, score1_name, score2, score2_name, save_path=None):
     save_path : str, optional
         If given, the figure is also saved to this file (the format follows
         the extension, e.g. ``"recruitment.png"``) at 300 dpi.
+    colors, ylabel, title : optional
+        See :func:`plot_scores_avg`.
     """
-    plot_scores_avg([(score1, score1_name), (score2, score2_name)], save_path=save_path)
-    #plot_score_avg(score1, label = score1_name, show=False)
-    #plot_score_avg(score2, label = score2_name, color = "red")
+    plot_scores_avg([(score1, score1_name), (score2, score2_name)], save_path=save_path, colors=colors, ylabel=ylabel, title=title)
 
-def plot_scores_avg(scores_names, save_path=None):
+def plot_scores_avg(scores_names, save_path=None, colors=None, ylabel=None, title=None):
     """
     Plot several labeled score-series collections overlaid on one figure.
 
@@ -2046,16 +2113,21 @@ def plot_scores_avg(scores_names, save_path=None):
     ----------
     scores_names : list of tuple of (list of numpy.ndarray, str)
         ``(score_series_list, label)`` pairs, one per group to overlay.
-        Up to 6 groups are supported (colors cycle through
-        red/blue/green/purple/yellow/black).
     save_path : str, optional
         If given, the figure is also saved to this file (the format follows
         the extension, e.g. ``"recruitment.png"``) at 300 dpi.
+    colors : list of str or dict of str to str, optional
+        Line colors, in group order or keyed by label. Defaults to
+        :data:`DEFAULT_COLORS` (colorblind-safe); a shorter list is repeated.
+    ylabel, title : str, optional
+        Y-axis label and figure title.
     """
-    colors = ['red','blue','green','purple','yellow','black']
-    for i, (score, name) in enumerate(scores_names):
+    plt.figure(figsize=(6, 4))
+    group_colors = _resolve_colors(colors, [name for _, name in scores_names])
+    for i, ((score, name), color) in enumerate(zip(scores_names, group_colors)):
         is_last = i+1 == len(scores_names)
-        plot_score_avg(score, label = name, show=is_last, color=colors[i], save_path=save_path if is_last else None)
+        plot_score_avg(score, label = name, show=is_last, color=color, save_path=save_path if is_last else None,
+                       ylabel=ylabel, title=title)
 
 def plot_brightness_score_series(batch: ExperimentBatch, score_type: ScoreType = ScoreType.Ratio, range_modifier=4, cell_filter=lambda x: True, baseline_correct=False):
     """
