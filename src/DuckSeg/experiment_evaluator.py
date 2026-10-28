@@ -263,16 +263,18 @@ def evalute_batch(batch: ExperimentBatch, start = 1, transforms=None, use_cache=
     """
     for experiment in batch.experiments():
         print(f"Evaluating {experiment.name}")
-        if use_cache:
-            try:
-                wt_eval = ExperimentEvaluator.load_experiment(experiment)
-                print("Loaded from cache")
-                continue
-            except:
-                pass
-        wt_eval = evalute_experiment1(experiment, transforms=transforms)
-        wt_eval.save(force=True)
-        
+        evaluator = ExperimentEvaluator.load_experiment(experiment) if use_cache else None
+        if evaluator is not None and experiment.max_len is not None and len(evaluator.boxes) != experiment.max_len:
+            evaluator = None  # cached with a different number of frames (batch.max_len changed)
+        if evaluator is None:
+            print("  Segmenting from scratch")
+            evaluator = evalute_experiment1(experiment, transforms=transforms)
+            evaluator.save()
+        else:
+            print("  Loaded from cache")
+        videos += evaluator.cell_videos()
+    return videos
+
 def print_counts(arr):
     """Print each unique value in ``arr`` alongside its occurrence count. Debug helper."""
     unique_elements, counts = np.unique(arr, return_counts=True)
@@ -483,6 +485,8 @@ class ExperimentEvaluator:
     cell_image_lists: Optional[list[list[ndarray]]] = None
     cell_mask_lists: Optional[list[list[ndarray]]] = None
     cell_video_inds: Optional[list[list[int]]] = None
+    # ROI lines the tracking was done with (None in caches from older versions)
+    roi_ranges: Optional[list[tuple[int]]] = None
 
     def create_starting_boxes(self, threshold_value = 1, transforms=None):
         """
@@ -867,9 +871,16 @@ class ExperimentEvaluator:
             its methods match the currently loaded class definition.
         """
         old = experiment.load_data("evaluator")
+        if old is None:
+            return None
         old.experiment = experiment
-        #old.cell_videos = ExperimentEvaluator.cell_videos
-        return ExperimentEvaluator.from_other(old)
+        evaluator = ExperimentEvaluator.from_other(old)
+        if evaluator.roi_ranges != experiment.ROI_ranges():
+            print(f"  {experiment.name}: ROI lines changed, re-tracking cells (CellSAM not re-run). "
+                  "Cell ids may now point to other cells: re-check manual outliers.")
+            evaluator.retrack()
+            evaluator.save()
+        return evaluator
 
 def mask_diff(box1, mask1, box2, mask2):
     """
