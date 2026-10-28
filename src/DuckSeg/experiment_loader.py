@@ -212,6 +212,32 @@ class Experiment:
     loaded_video_u8: Optional[list[ndarray]] = None
     loaded_ROI: Optional[ndarray] = None
     _ROI_ranges: Optional[list[tuple[int]]] = None
+    def frame_count(self) -> int:
+        """
+        Return the number of frames used for this experiment, without
+        loading the video if it is not loaded yet.
+
+        Returns
+        -------
+        int
+            The number of frames in the video file, capped at ``max_len``
+            if set.
+        """
+        if self.loaded_video is not None:
+            n = len(self.loaded_video)
+        elif self.loaded_video_u8 is not None:
+            n = len(self.loaded_video_u8)
+        elif self.path.lower().endswith(".nd2"):
+            with nd2.ND2File(self.path) as f:
+                n = f.attributes.sequenceCount
+        elif self.path.lower().endswith((".tif", ".tiff")):
+            with tifffile.TiffFile(self.path) as f:
+                shape = f.series[0].shape
+                n = shape[0] if len(shape) > 2 else 1
+        else:
+            raise ValueError(f"Unsupported video file format: {self.path}")
+        return n if self.max_len is None else min(n, self.max_len)
+
     def first_frame_u8(self):
         """Return the first frame of the video as 8-bit grayscale."""
         return self.frame_u8(0)

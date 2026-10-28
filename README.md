@@ -4,7 +4,7 @@
 
 **Deep-learning Utility for Cell masKing and Segmentation**
 
-[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ronalabrcns/DuckSeg/blob/main/notebooks/DuckSeg_Colab.ipynb)
+[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ronalabrcns/DuckSeg/blob/main/notebooks/DuckSeg_Example.ipynb)
 [![Documentation](https://img.shields.io/readthedocs/duckseg)](https://duckseg.readthedocs.io/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](pyproject.toml)
@@ -31,11 +31,11 @@ reproducible one.
 
 ### Google Colab (no installation)
 
-Open [`DuckSeg_Colab.ipynb`](https://colab.research.google.com/github/ronalabrcns/DuckSeg/blob/main/notebooks/DuckSeg_Colab.ipynb),
+Open [`DuckSeg_Example.ipynb`](https://colab.research.google.com/github/ronalabrcns/DuckSeg/blob/main/notebooks/DuckSeg_Example.ipynb),
 choose a GPU runtime, and add your DeepCell token (from
 [users.deepcell.org](https://users.deepcell.org/)) to the Colab *Secrets*
-panel as `DEEPCELL_ACCESS_TOKEN`. The notebook reads your videos from
-Google Drive.
+panel as `DEEPCELL_ACCESS_TOKEN`. It runs on an example dataset; switch
+`DATA_SOURCE` to `"drive"` to analyse your own videos from Google Drive.
 
 ### Local installation
 
@@ -74,6 +74,7 @@ from DuckSeg.outlier_filters import area_between, outlier_vids
 from DuckSeg.video_exporter import export_cell_videos
 
 batch = ExperimentBatch("MSH2", "/path/to/videos")
+batch.max_len = min(e.frame_count() for e in batch.experiments())   # same length for all videos
 
 transforms = [convert_to_u8, set_brightness(20), threshold_image(20)]
 vids = evaluate_batch(batch, transforms=transforms)    # segment + track (slow, cached)
