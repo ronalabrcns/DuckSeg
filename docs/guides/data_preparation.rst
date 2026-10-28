@@ -10,8 +10,8 @@ File names
 
 For each experiment put two files in the batch directory::
 
-    MSH2_WT_001.nd2          # the video (.nd2, .tif or .tiff)
-    MSH2_WT_001_ROI.tif      # the laser ROI mask
+    MSH2_001.nd2             # the video (.nd2, .tif or .tiff)
+    MSH2_001_ROI.tif         # the laser ROI mask
 
 * The ROI file must be called ``<video name without extension>_ROI.tif``.
   Files ending in ``_ROI.tif`` are never treated as videos; a mask saved as
@@ -19,8 +19,6 @@ For each experiment put two files in the batch directory::
 * The mask has the same height and width as the video. Non-zero pixels
   mark the irradiated rows; the rows are read along the middle column of
   the image, so the stripe has to cross it.
-* Put the group in the name as ``_WT_`` or ``_KO_`` if you want to use the
-  WT-versus-KO plot (:func:`~DuckSeg.experiment_evaluator.plot_brightness_score_wt_ko`).
 
 Load a batch
 ============

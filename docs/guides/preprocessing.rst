@@ -31,7 +31,7 @@ Parameters
 
 ``experiment_filter``
     ``None`` for all experiments, a list of indices such as ``[0, 2, 4]``,
-    or a string: only experiments whose name contains it (``'KO'``).
+    or a string: only experiments whose name contains it (``'siNT'``).
 
 ``frame_filter``
     An integer ``N`` samples ``N`` frames evenly (``1``: first frame,

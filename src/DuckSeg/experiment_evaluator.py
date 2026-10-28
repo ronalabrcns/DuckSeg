@@ -17,7 +17,7 @@ batch with CellSAM, tracks each detected cell across frames into a
   of a laser-irradiation ROI recruitment assay.
 - The ``plot_*`` and ``calc_brightness_score``/``calculate_brightness_score_for_*``
   functions aggregate :class:`CellVideo` scores across many cells,
-  experiments, or WT/KO batches for visualization.
+  experiments, or batches for visualization.
 - :class:`BoundingBox` is the shared rectangle type used throughout for
   CellSAM detections and cropping.
 
@@ -52,7 +52,6 @@ __all__ = [
     "plot_brightness_score",
     "plot_brightness_score_double",
     "plot_brightness_scores",
-    "plot_brightness_score_wt_ko",
     "plot_brightness_score_series",
     "plotly_time_series_distribution_3d",
     "plot_all_scores",
@@ -64,7 +63,7 @@ __all__ = [
 
 import dataclasses
 from copy import deepcopy
-from DuckSeg.experiment_loader import ExperimentBatch, Experiment, ExperimentType
+from DuckSeg.experiment_loader import ExperimentBatch, Experiment
 from DuckSeg.experiment_loader import generate_ROI_ranges as compute_roi_ranges
 from typing import Optional
 import numpy as np
@@ -1642,7 +1641,7 @@ def combine_batch_videos(batch: ExperimentBatch, extra_draw=None, cell_filter=la
     Loads each experiment's cached :class:`ExperimentEvaluator` (see
     :meth:`ExperimentEvaluator.load_experiment`), tiles its cell videos
     with :func:`combine_cell_videos`, and labels the result with the
-    experiment's :meth:`~DuckSeg.experiment_loader.Experiment.in_batch_id`.
+    experiment's name.
 
     Parameters
     ----------
@@ -1669,17 +1668,16 @@ def combine_batch_videos(batch: ExperimentBatch, extra_draw=None, cell_filter=la
         cell_videos = ExperimentEvaluator.load_experiment(exp).cell_videos()
         cell_videos = [video for video in cell_videos if cell_filter(video)]
         vid = combine_cell_videos(ExperimentEvaluator.load_experiment(exp).cell_videos(), extra_draw=extra_draw, cell_filter=cell_filter)
-        titled_vid = add_title_to_video(vid, exp.in_batch_id(), height=100)
+        titled_vid = add_title_to_video(vid, exp.name, height=100)
         exp_videos.append(titled_vid)
     #exp_videos = [combine_cell_videos(ExperimentEvaluator.load_experiment(exp).cell_videos()) for exp in experiments[:2]]
     vid = np.concatenate(exp_videos, axis=2)
     #play_nb_video(vid)
     return vid
 
-def calc_brightness_score(batch: ExperimentBatch, score_type: ScoreType = ScoreType.Ratio, range_modifier=4, cell_filter=lambda x: True, experiment_type = None, print_progress=False, baseline_correct=False):
+def calc_brightness_score(batch: ExperimentBatch, score_type: ScoreType = ScoreType.Ratio, range_modifier=4, cell_filter=lambda x: True, print_progress=False, baseline_correct=False):
     """
-    Compute per-cell brightness scores for a batch, optionally restricted
-    to one experimental group.
+    Compute per-cell brightness scores for every experiment of a batch.
 
     Parameters
     ----------
@@ -1696,10 +1694,6 @@ def calc_brightness_score(batch: ExperimentBatch, score_type: ScoreType = ScoreT
         Predicate selecting which cells to include, e.g. the result of
         :func:`DuckSeg.outlier_filters.outlier_vids` inverted into a
         keep-filter.
-    experiment_type : DuckSeg.experiment_loader.ExperimentType, optional
-        If given, restricts to :meth:`~DuckSeg.experiment_loader.ExperimentBatch.wt_experiments`
-        or :meth:`~DuckSeg.experiment_loader.ExperimentBatch.ko_experiments`;
-        otherwise every experiment in the batch is used.
     print_progress : bool, optional
         If ``True``, print each experiment's name as it's processed.
     baseline_correct : bool, optional
@@ -1713,14 +1707,8 @@ def calc_brightness_score(batch: ExperimentBatch, score_type: ScoreType = ScoreT
         One list per experiment, each containing one score time series per
         (filtered) cell.
     """
-    if experiment_type == ExperimentType.WT:
-        experiments = batch.wt_experiments()
-    elif experiment_type == ExperimentType.KO:
-        experiments = batch.ko_experiments()
-    else:
-        experiments = batch.experiments()
     return calculate_brightness_score_for_experiments(
-            experiments,
+            batch.experiments(),
             score_type=score_type,
             range_modifier=range_modifier,
             cell_filter=cell_filter,
@@ -1985,44 +1973,6 @@ def plot_brightness_scores(batches: list[ExperimentBatch], score_type: ScoreType
         scores_names.append((flattened, batch.name))
     plot_scores_avg(scores_names, save_path=save_path)
 
-
-def plot_brightness_score_wt_ko(batch: ExperimentBatch, score_type: ScoreType = ScoreType.Ratio, range_modifier=4, cell_filter=lambda x: True, print_progress=False, baseline_correct=False, save_path=None):
-    """
-    Plot WT vs. KO batch-averaged brightness scores from a single batch.
-
-    Splits ``batch`` into its WT and KO experiments (see
-    :meth:`~DuckSeg.experiment_loader.ExperimentBatch.wt_experiments` /
-    :meth:`~DuckSeg.experiment_loader.ExperimentBatch.ko_experiments`) and
-    overlays their averaged score time series — the standard genotype
-    comparison plot for a laser-ROI recruitment assay.
-
-    Parameters
-    ----------
-    batch : DuckSeg.experiment_loader.ExperimentBatch
-        Batch containing both WT and KO experiments.
-    score_type : ScoreType, optional
-        See :meth:`CellVideo.calculate_brightness_score`.
-    range_modifier : float, optional
-        ROI width factor forwarded to
-        :meth:`CellVideo.calculate_brightness`.
-    cell_filter : Callable[[CellVideo], bool], optional
-        Predicate selecting which cells to include, applied to both
-        groups.
-    print_progress : bool, optional
-        If ``True``, print each experiment's name as it's processed.
-    baseline_correct : bool, optional
-        If ``True``, subtract the value of the first frame from every
-        score series so that the curves start at zero. Default ``False``
-        (raw scores).
-    save_path : str, optional
-        If given, the figure is also saved to this file (the format follows
-        the extension, e.g. ``"recruitment.png"``) at 300 dpi.
-    """
-    wt_diffs = calc_brightness_score(batch, score_type = score_type, range_modifier=range_modifier, cell_filter=cell_filter, experiment_type = ExperimentType.WT, print_progress=print_progress, baseline_correct=baseline_correct)
-    ko_diffs = calc_brightness_score(batch, score_type = score_type, range_modifier=range_modifier, cell_filter=cell_filter, experiment_type = ExperimentType.KO, print_progress=print_progress, baseline_correct=baseline_correct)
-    wt_flattened = [diff for exp_diff in wt_diffs for diff in exp_diff]
-    ko_flattened = [diff for exp_diff in ko_diffs for diff in exp_diff]
-    plot_score_double(wt_flattened, "wt", ko_flattened, "ko", save_path=save_path)
 
 def plot_score_double(score1, score1_name, score2, score2_name, save_path=None):
     """

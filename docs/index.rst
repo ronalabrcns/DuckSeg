@@ -63,8 +63,8 @@ Laser micro-irradiation assays induce a localized DNA damage stripe
 across a nucleus and image, over time, whether a fluorescently tagged
 protein of interest (e.g. a DNA repair or mismatch-repair factor)
 accumulates at that stripe relative to the rest of the cell. Answering
-this question at scale — across many cells, many fields of view, and
-multiple genotypes (e.g. wild-type vs. knock-out) — requires:
+this question at scale — across many cells and many fields of view —
+requires:
 
 1. segmenting individual cells in every frame of every video,
 2. tracking each cell across the time-lapse despite movement and
@@ -95,7 +95,7 @@ Key features
 - **Laser-ROI brightness scoring** — per-frame, per-cell comparison of
   in-ROI vs. out-of-ROI fluorescence, as both an absolute difference and
   a ratio (:class:`~DuckSeg.experiment_evaluator.ScoreType`), with
-  batch-level and WT-vs-KO comparison plots built in.
+  batch-level comparison plots built in.
 - **Interactive ROI correction** (:mod:`~DuckSeg.roi_editor`) and
   **interactive outlier review** (:mod:`~DuckSeg.cell_video_visualizer`)
   as Jupyter widgets, plus configurable automated outlier filters
@@ -167,8 +167,8 @@ notebook (see :doc:`workflow` for the full walkthrough):
 Data expected on disk, per experiment, inside a batch directory
 (details in :doc:`guides/data_preparation`)::
 
-    <NAME>_<WT|KO>_<...>.nd2        # or .tif / .tiff
-    <NAME>_<WT|KO>_<...>_ROI.tif    # binary laser-ROI mask, same frame size
+    <NAME>_<...>.nd2        # or .tif / .tiff
+    <NAME>_<...>_ROI.tif    # binary laser-ROI mask, same frame size
 
 Citing DuckSeg
 ==============
@@ -194,8 +194,6 @@ DuckSeg is released under the MIT License.
    concepts
    troubleshooting
    modules
-   changelog
-   contributing
 
 Indices and tables
 ==================

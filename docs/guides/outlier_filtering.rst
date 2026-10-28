@@ -34,7 +34,7 @@ the cell should be **kept**. The ready-made filters in
    from DuckSeg.outlier_filters import area_between, max_area_change_between_frames, outlier_vids
 
    filters = [area_between(10, 5000), max_area_change_between_frames(0.2)]
-   extra_manual_outliers = {"MSH2_WT_001_7"}       # ids you always want to exclude
+   extra_manual_outliers = {"MSH2_001_7"}       # ids you always want to exclude
    outliers = outlier_vids(vids, extra_manual_outliers, filters)
 
 ``outliers`` is the set of ids that failed any filter, plus the manual ids.

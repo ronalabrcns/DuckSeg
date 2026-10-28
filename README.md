@@ -33,8 +33,7 @@ Laser micro-irradiation assays induce a localized DNA damage stripe across
 a nucleus and image, over time, whether a fluorescently tagged protein of
 interest (e.g. a DNA repair or mismatch-repair factor) accumulates at that
 stripe relative to the rest of the cell. Answering this question at scale —
-across many cells, many fields of view, and multiple genotypes (e.g.
-wild-type vs. knock-out) — requires:
+across many cells and many fields of view — requires:
 
 1. segmenting individual cells in every frame of every video,
 2. tracking each cell across the time-lapse despite movement and
@@ -57,7 +56,7 @@ without sacrificing quality control.
   matching, robust to modest cell movement between frames.
 - **Laser-ROI brightness scoring** — per-frame, per-cell comparison of
   in-ROI vs. out-of-ROI fluorescence, as both an absolute difference and a
-  ratio, with batch-level and WT-vs-KO comparison plots built in.
+  ratio, with batch-level comparison plots built in.
 - **Interactive ROI correction** and **interactive outlier review** as
   Jupyter widgets, plus configurable automated outlier filters.
 - **CSV export** of per-cell brightness measurements for downstream
@@ -114,11 +113,6 @@ Point DuckSeg at a folder containing your videos and ROI masks:
 - `NAME_00123_ROI.tif` — the laser-ROI mask, same frame size as the video
 - Set the `name` variable to `NAME` (e.g. `MSH2`)
 
-Encode the experimental group in the file name:
-
-- `WT` or `KO`
-- e.g. `NAME_WT_00123.tiff`
-
 ```python
 from DuckSeg.experiment_loader import ExperimentBatch
 batch = ExperimentBatch(name, data_dir)
@@ -129,7 +123,7 @@ batch = ExperimentBatch(name, data_dir)
 - **`experiment_filter`** — which experiments in the batch are processed:
   - `None` — all experiments
   - list of indices, e.g. `[0, 2, 4]` — only these
-  - string, e.g. `'KO'` — only experiments whose name contains this label
+  - string, e.g. `'siNT'` — only experiments whose name contains this label
 - **`frame_filter`** — which frames to process from each experiment:
   - integer `N` — evenly split the video into `N` sample points (`1` = first
     frame only, `2` = first + last, `3` = first + middle + last, …)
@@ -200,8 +194,8 @@ You can add new transforms in that same file — anything with the shape
 
 ## Output
 
-`plot_brightness_score_wt_ko` compares brightness intensity between WT and
-KO groups, in two modes (`ScoreType`):
+`plot_brightness_score` plots the mean brightness score of a batch over time
+(mean ± SEM), in two modes (`ScoreType`):
 
 1. `Ratio` — in-ROI / out-of-ROI brightness
 2. `Diff` — in-ROI − out-of-ROI brightness

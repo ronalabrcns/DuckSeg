@@ -11,12 +11,8 @@ mask, and derives the pixel row ranges struck by the laser
 
 Expected file naming convention, per experiment, inside a batch directory::
 
-    <NAME>_<WT|KO>_<...>.nd2        # or .tif / .tiff
-    <NAME>_<WT|KO>_<...>_ROI.tif    # binary mask, same frame size
-
-where the group label (``WT``/``KO``) anywhere in the file name is used by
-:meth:`ExperimentBatch.wt_experiments` / :meth:`ExperimentBatch.ko_experiments`
-to split a batch into conditions.
+    <NAME>_<...>.nd2        # or .tif / .tiff
+    <NAME>_<...>_ROI.tif    # binary mask, same frame size
 """
 
 __all__ = [
@@ -27,7 +23,6 @@ __all__ = [
     "tiff_u8_frames",
     "generate_ROI_ranges",
     "Experiment",
-    "ExperimentType",
     "ExperimentBatch",
     "experiment_batches",
 ]
@@ -44,7 +39,6 @@ from IPython.display import HTML, display
 from PIL import Image
 import pickle
 import matplotlib.pyplot as plt
-import enum
 
 import tifffile #add to dependencies also
 
@@ -200,7 +194,7 @@ class Experiment:
     ----------
     name : str
         Experiment identifier, derived from the video file name without
-        its extension (e.g. ``"MSH2_WT_00123"``).
+        its extension (e.g. ``"MSH2_00123"``).
     path : str
         Path to the video file (``.nd2`` or ``.tif``/``.tiff``).
     ROI_path : str
@@ -441,30 +435,6 @@ class Experiment:
         except FileNotFoundError:
             return None
 
-    def in_batch_id(self) -> str:
-        """
-        Return a short display label distinguishing this experiment within
-        its batch, e.g. ``"WT 3"`` or ``"KO 1"``.
-
-        Derived from the ``WT``/``KO`` group label and the last character
-        of ``name`` (typically a per-condition sequence number).
-
-        Returns
-        -------
-        str or None
-            The display label, or ``None`` if ``name`` contains neither
-            ``"WT"`` nor ``"KO"``.
-        """
-        if 'WT' in self.name:
-            return f'WT {self.name[-1]}'
-        if 'KO' in self.name:
-            return f'KO {self.name[-1]}'
-
-class ExperimentType(enum.Enum):
-    """Experimental group label: wild-type or knock-out."""
-    WT = 0
-    KO = 1
-
 @dataclasses.dataclass
 class ExperimentBatch:
     """
@@ -534,42 +504,6 @@ class ExperimentBatch:
             
         return sorted(experiments, key=lambda exp: exp.name)
         
-    def ko_experiment(self, i: int):
-        """Return the KO experiment whose name (file name without extension) ends in ``"00{i}"``."""
-        end = f"00{i}"
-        return [e for e in self.experiments() if "_KO_" in e.name and e.name.endswith(end)][0]
-    def wt_experiment(self, i: int):
-        """Return the WT experiment whose name (file name without extension) ends in ``"00{i}"``."""
-        end = f"00{i}"
-        return [e for e in self.experiments() if "_WT_" in e.name and e.name.endswith(end)][0]
-    def wt_experiments(self):
-        """Return every experiment whose path contains ``"_WT_"``."""
-        return [e for e in self.experiments() if "_WT_" in e.path]
-    def ko_experiments(self):
-        """Return every experiment whose path contains ``"_KO_"``."""
-        return [e for e in self.experiments() if "_KO_" in e.path]
-
-
-    def experiment(self, i: int, type: ExperimentType) -> Experiment:
-        """
-        Return experiment ``i`` of the given group.
-
-        Parameters
-        ----------
-        i : int
-            Sequence number, forwarded to :meth:`wt_experiment` /
-            :meth:`ko_experiment`.
-        type : ExperimentType
-            Which group to look in.
-
-        Returns
-        -------
-        Experiment
-        """
-        if type == ExperimentType.WT:
-            return self.wt_experiment(i)
-        elif type == ExperimentType.KO:
-            return self.ko_experiment(i)
 
 def experiment_batches(data_dir):
     """

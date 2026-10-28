@@ -33,7 +33,7 @@ def apply_experiment_filter(experiments, filter):
     filter : None or str or list of int
         - ``None``: keep every experiment.
         - ``str``: keep experiments whose ``name`` contains this substring
-          (e.g. ``"KO"`` keeps every knock-out experiment).
+          (e.g. ``"siNT"`` keeps every experiment with this label in its name).
         - ``list of int``: keep only the experiments at these positions.
 
     Returns
