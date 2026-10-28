@@ -40,10 +40,14 @@ To compare experiments, cut them all to the length of the shortest one:
 
 .. code-block:: python
 
-   batch.max_len = min(len(e.frames_u8()) for e in batch.experiments())
+   batch.max_len = min(e.frame_count() for e in batch.experiments())
 
+``frame_count()`` reads only the file header, not the frames.
 ``max_len`` is applied to every experiment that ``batch.experiments()``
-returns afterwards.
+returns afterwards. Lowering it later reuses the cached segmentation
+(cut to the new length); raising it segments the missing frames again.
+The plots stop with a clear message if the videos of a plot have
+different lengths.
 
 Bit depth
 =========

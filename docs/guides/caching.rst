@@ -37,8 +37,10 @@ ROI lines changed
     message tells you that cell ids may now refer to other cells.
 
 Different number of frames
-    If ``batch.max_len`` differs from the number of frames in the cache,
-    that experiment is segmented again.
+    If ``batch.max_len`` was lowered, the cached result is cut to the new
+    length and the cells are re-tracked (CellSAM is not run again). Only
+    when more frames are needed than the cache holds is that experiment
+    segmented again.
 
 Changed transforms
     The cache does **not** notice a change of ``transforms``. After

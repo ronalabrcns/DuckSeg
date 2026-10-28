@@ -36,4 +36,4 @@ docs = [
 [project.urls]
 Documentation = "https://duckseg.readthedocs.io"
 Homepage = "https://github.com/ronalabrcns/DuckSeg"
-"Google Colab" = "https://colab.research.google.com/github/ronalabrcns/DuckSeg/blob/main/notebooks/DuckSeg_Colab.ipynb"
+"Google Colab" = "https://colab.research.google.com/github/ronalabrcns/DuckSeg/blob/main/notebooks/DuckSeg_Example.ipynb"

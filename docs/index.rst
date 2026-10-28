@@ -30,7 +30,7 @@ workflow.
 .. raw:: html
 
    <p>
-     <a href="https://colab.research.google.com/github/ronalabrcns/DuckSeg/blob/main/notebooks/DuckSeg_Colab.ipynb">
+     <a href="https://colab.research.google.com/github/ronalabrcns/DuckSeg/blob/main/notebooks/DuckSeg_Example.ipynb">
        <img alt="Open in Colab" src="https://colab.research.google.com/assets/colab-badge.svg">
      </a>
      <a href="https://github.com/ronalabrcns/DuckSeg">
@@ -49,8 +49,8 @@ workflow.
    The fastest way to see DuckSeg in action — including on your own
    microscopy data — is the example notebook on Google Colab:
 
-   `Open DuckSeg_Colab.ipynb in Google Colab
-   <https://colab.research.google.com/github/ronalabrcns/DuckSeg/blob/main/notebooks/DuckSeg_Colab.ipynb>`_
+   `Open DuckSeg_Example.ipynb in Google Colab
+   <https://colab.research.google.com/github/ronalabrcns/DuckSeg/blob/main/notebooks/DuckSeg_Example.ipynb>`_
 
    It clones the repository, installs dependencies (including CellSAM),
    and walks through the full pipeline end to end on a GPU runtime
@@ -137,7 +137,7 @@ For a local installation:
     pip install git+https://github.com/vanvalenlab/cellSAM.git
 
 No local GPU? Use the `Google Colab notebook
-<https://colab.research.google.com/github/ronalabrcns/DuckSeg/blob/main/notebooks/DuckSeg_Colab.ipynb>`_.
+<https://colab.research.google.com/github/ronalabrcns/DuckSeg/blob/main/notebooks/DuckSeg_Example.ipynb>`_.
 See :doc:`installation` for all details, including the access token.
 
 Quickstart
@@ -155,6 +155,7 @@ notebook (see :doc:`workflow` for the full walkthrough):
     from DuckSeg.video_exporter import export_cell_videos
 
     batch = ExperimentBatch("MSH2", "/path/to/videos")
+    batch.max_len = min(e.frame_count() for e in batch.experiments())   # same length for all videos
 
     transforms = [convert_to_u8, set_brightness(20), threshold_image(20)]
     vids = evaluate_batch(batch, transforms=transforms)    # segment + track (slow, cached)

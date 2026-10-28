@@ -42,6 +42,10 @@ Changed the preprocessing but the results look the same
     :func:`~DuckSeg.experiment_evaluator.evaluate_batch`; unchanged
     segmentation is reused and the cells are re-tracked.
 
+``No cells left to plot``
+    Every cell was excluded or has NaN scores. Check ``cell_filter``, the
+    stripe position and ``range_modifier``.
+
 The plots are missing a cell or show a gap
     Cells whose score contains NaN are dropped from the averages. This
     happens when a mask has no pixels inside or outside the band for some
@@ -49,6 +53,7 @@ The plots are missing a cell or show a gap
     entire cell. Lower ``range_modifier``.
 
 Experiments cannot be compared because they have different lengths
-    Set ``batch.max_len`` to the shortest recording
-    (:doc:`guides/data_preparation`). A cache made with another length is
-    discarded automatically.
+    The plots stop with *The videos have different numbers of frames*. Set
+    ``batch.max_len`` to the shortest recording
+    (:doc:`guides/data_preparation`). Lowering it reuses the cache; raising
+    it segments the missing frames.
