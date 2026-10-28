@@ -51,6 +51,7 @@ def outlier_vids(vids, manual, filters):
     set of str
         The union of ``manual`` and every video ID rejected by ``filters``.
     """
+    area_cache.clear()  # cell ids can point to other cells after the ROI lines changed
     outliers = set(manual)
     for vid in vids:
         for filter in filters:
