@@ -6,7 +6,7 @@ transform's parameters and returns a ``Callable[[numpy.ndarray],
 numpy.ndarray]`` that applies the transform to a single frame. This makes
 them composable in the ``transforms`` list passed to
 :func:`DuckSeg.image_transformer.generate_masks_using_filters_and_transforms`
-and :func:`DuckSeg.experiment_evaluator.evalute_batch`, e.g.::
+and :func:`DuckSeg.experiment_evaluator.evaluate_batch`, e.g.::
 
     transforms = [convert_to_u8, set_brightness(20), threshold_image(20)]
 
@@ -14,6 +14,13 @@ and :func:`DuckSeg.experiment_evaluator.evalute_batch`, e.g.::
 frame rather than being a transform factory, since it has no tunable
 parameters.
 """
+
+__all__ = [
+    "convert_to_u8",
+    "threshold_image",
+    "adjust_contrast",
+    "set_brightness",
+]
 
 import numpy as np
 import cv2
@@ -79,12 +86,17 @@ def adjust_contrast(alpha: float = 1.0, beta: float = 0.0):
       - cv2.convertScaleAbs for alpha >= 1 and beta >= 0
       - manual subtraction + saturation when beta < 0
 
-    Args:
-        alpha (float): Contrast multiplier.
-        beta (float): Brightness shift (can be positive or negative).
+    Parameters
+    ----------
+    alpha : float, optional
+        Contrast multiplier.
+    beta : float, optional
+        Brightness shift (can be positive or negative).
 
-    Returns:
-        Callable[[np.ndarray], np.ndarray]: A function to adjust a uint8 grayscale image.
+    Returns
+    -------
+    Callable[[numpy.ndarray], numpy.ndarray]
+        A function to adjust a uint8 grayscale image.
     """
     def adjust(image: np.ndarray) -> np.ndarray:
         if beta >= 0:

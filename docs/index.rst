@@ -63,8 +63,8 @@ Laser micro-irradiation assays induce a localized DNA damage stripe
 across a nucleus and image, over time, whether a fluorescently tagged
 protein of interest (e.g. a DNA repair or mismatch-repair factor)
 accumulates at that stripe relative to the rest of the cell. Answering
-this question at scale — across many cells, many fields of view, and
-multiple genotypes (e.g. wild-type vs. knock-out) — requires:
+this question at scale — across many cells and many fields of view —
+requires:
 
 1. segmenting individual cells in every frame of every video,
 2. tracking each cell across the time-lapse despite movement and
@@ -95,7 +95,7 @@ Key features
 - **Laser-ROI brightness scoring** — per-frame, per-cell comparison of
   in-ROI vs. out-of-ROI fluorescence, as both an absolute difference and
   a ratio (:class:`~DuckSeg.experiment_evaluator.ScoreType`), with
-  batch-level and WT-vs-KO comparison plots built in.
+  batch-level comparison plots built in.
 - **Interactive ROI correction** (:mod:`~DuckSeg.roi_editor`) and
   **interactive outlier review** (:mod:`~DuckSeg.cell_video_visualizer`)
   as Jupyter widgets, plus configurable automated outlier filters
@@ -117,7 +117,7 @@ reference for every function and class involved. In brief:
     ExperimentBatch (load videos + ROI masks)
         -> roi_editor (optional manual ROI correction)
         -> image_transforms / image_transformer (preprocessing, tuned interactively)
-        -> evalute_batch -> ExperimentEvaluator (CellSAM segmentation + per-cell tracking)
+        -> evaluate_batch -> ExperimentEvaluator (CellSAM segmentation + per-cell tracking)
         -> cell_video_visualizer + outlier_filters (review and filter tracked cells)
         -> CellVideo.calculate_brightness_score + plot_brightness_score* (quantify + visualize)
         -> video_exporter (CSV export)
@@ -125,24 +125,20 @@ reference for every function and class involved. In brief:
 Installation
 ============
 
-DuckSeg targets Python 3.10+. For a local installation with GPU support::
+DuckSeg targets Python 3.10+ and needs `CellSAM
+<https://github.com/vanvalenlab/cellSAM>`_ with a DeepCell access token.
+For a local installation:
+
+.. code-block:: bash
 
     git clone https://github.com/ronalabrcns/DuckSeg.git
     cd DuckSeg
-    python -m venv myenv
-    source myenv/bin/activate
-    python -m pip install -r requirements.txt
-    pip install git+https://github.com/vanvalenlab/cellSAM.git
     pip install -e .
+    pip install git+https://github.com/vanvalenlab/cellSAM.git
 
-Then launch Jupyter and open a notebook from ``notebooks/``::
-
-    python -m jupyter lab
-
-No local GPU or environment setup? Use the
-`Google Colab notebook <https://colab.research.google.com/github/ronalabrcns/DuckSeg/blob/main/notebooks/DuckSeg_Colab.ipynb>`_
-instead — it installs everything it needs, including CellSAM, in the
-first few cells.
+No local GPU? Use the `Google Colab notebook
+<https://colab.research.google.com/github/ronalabrcns/DuckSeg/blob/main/notebooks/DuckSeg_Colab.ipynb>`_.
+See :doc:`installation` for all details, including the access token.
 
 Quickstart
 ==========
@@ -154,24 +150,29 @@ notebook (see :doc:`workflow` for the full walkthrough):
 
     from DuckSeg.experiment_loader import ExperimentBatch
     from DuckSeg.image_transforms import convert_to_u8, set_brightness, threshold_image
-    from DuckSeg.experiment_evaluator import (
-        evalute_batch, ExperimentEvaluator, ScoreType, plot_brightness_score,
-    )
+    from DuckSeg.experiment_evaluator import evaluate_batch, plot_brightness_score, ScoreType
+    from DuckSeg.outlier_filters import area_between, outlier_vids
+    from DuckSeg.video_exporter import export_cell_videos
 
     batch = ExperimentBatch("MSH2", "/path/to/videos")
 
     transforms = [convert_to_u8, set_brightness(20), threshold_image(20)]
-    evalute_batch(batch, transforms=transforms)  # segment + track (slow, cached)
+    vids = evaluate_batch(batch, transforms=transforms)    # segment + track (slow, cached)
 
-    vids = [v for exp in batch.experiments()
-              for v in ExperimentEvaluator.load_experiment(exp).cell_videos()]
+    outliers = outlier_vids(vids, manual=set(), filters=[area_between(10, 5000)])
+    cell_filter = lambda vid: vid.id not in outliers
 
-    plot_brightness_score(batch, score_type=ScoreType.Ratio, range_modifier=4)
+    plot_brightness_score(batch, score_type=ScoreType.Ratio, range_modifier=4,
+                          cell_filter=cell_filter, baseline_correct=True,
+                          save_path="recruitment.png")
+    export_cell_videos([v for v in vids if cell_filter(v)], "brightness_scores.csv",
+                       range_modifier=4)
 
-Data expected on disk, per experiment, inside a batch directory::
+Data expected on disk, per experiment, inside a batch directory
+(details in :doc:`guides/data_preparation`)::
 
-    <NAME>_<WT|KO>_<...>.nd2        # or .tif / .tiff
-    <NAME>_<WT|KO>_<...>_ROI.tif    # binary laser-ROI mask, same frame size
+    <NAME>_<...>.nd2        # or .tif / .tiff
+    <NAME>_<...>_ROI.tif    # binary laser-ROI mask, same frame size
 
 Citing DuckSeg
 ==============
@@ -191,7 +192,11 @@ DuckSeg is released under the MIT License.
    :caption: Contents:
    :hidden:
 
+   installation
    workflow
+   guides/index
+   concepts
+   troubleshooting
    modules
 
 Indices and tables

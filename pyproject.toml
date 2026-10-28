@@ -8,8 +8,32 @@ authors = [{name = "Istvan Kato", email = "kato.istvan@ttk.hu"}, {name = "Matyas
 dynamic = ["version", "description"]
 readme = "README.md"
 requires-python = ">=3.10"
+# CellSAM (and with it PyTorch) is not on PyPI and is installed separately:
+#   pip install git+https://github.com/vanvalenlab/cellSAM.git
+dependencies = [
+    "numpy",
+    "pandas",
+    "matplotlib",
+    "plotly",
+    "pillow",
+    "opencv-python",
+    "tifffile",
+    "nd2",
+    "imageio",
+    "imageio-ffmpeg",
+    "ipython",
+    "ipywidgets",
+]
 classifiers = [ "Programming Language :: Python :: 3", "License :: OSI Approved :: MIT License", "Operating System :: OS Independent",]
 
+[project.optional-dependencies]
+docs = [
+    "sphinx>=7",
+    "pydata-sphinx-theme>=0.15",
+    "sphinx-copybutton",
+]
+
 [project.urls]
+Documentation = "https://duckseg.readthedocs.io"
 Homepage = "https://github.com/ronalabrcns/DuckSeg"
 "Google Colab" = "https://colab.research.google.com/github/ronalabrcns/DuckSeg/blob/main/notebooks/DuckSeg_Colab.ipynb"

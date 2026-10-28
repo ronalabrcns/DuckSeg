@@ -18,6 +18,15 @@ outlier IDs. New filters can be added following the same
 ``Callable[[CellVideo], bool]``-factory pattern.
 """
 
+__all__ = [
+    "outlier_vids",
+    "area",
+    "area_between",
+    "max_area_change_between_frames",
+    "max_total_area_change",
+    "id_starts_with",
+]
+
 import numpy as np
 
 def outlier_vids(vids, manual, filters):
@@ -42,6 +51,7 @@ def outlier_vids(vids, manual, filters):
     set of str
         The union of ``manual`` and every video ID rejected by ``filters``.
     """
+    area_cache.clear()  # cell ids can point to other cells after the ROI lines changed
     outliers = set(manual)
     for vid in vids:
         for filter in filters:
