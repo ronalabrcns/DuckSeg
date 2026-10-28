@@ -1,3 +1,20 @@
+"""
+Interactive Jupyter grid for reviewing and manually flagging cell videos.
+
+Renders every :class:`~DuckSeg.experiment_evaluator.CellVideo` in a batch
+as a small synchronized-playback thumbnail in a grid
+(:func:`show_video_grid_jupyter`), so a user can visually scan hundreds of
+tracked cells and tick a checkbox to mark any that were mis-segmented or
+mis-tracked. This is the human-in-the-loop step of the outlier-filtering
+stage in the example notebook, complementing the automated filters in
+:mod:`DuckSeg.outlier_filters`.
+
+:func:`normalize_videos_for_display` prepares
+:class:`~DuckSeg.experiment_evaluator.CellVideo` instances for the grid by
+homogenizing frame sizes and converting them to green-on-black PNG bytes
+(the :class:`Video` type the grid widget consumes).
+"""
+
 import ipywidgets as widgets
 from IPython.display import display
 import dataclasses
@@ -8,23 +25,67 @@ import numpy as np
 
 @dataclasses.dataclass
 class Video:
+    """
+    A display-ready cell video: pre-encoded PNG frames plus a display size.
+
+    Produced by :func:`normalize_videos_for_display` from a
+    :class:`~DuckSeg.experiment_evaluator.CellVideo`; this is the format
+    :func:`show_video_grid_jupyter` expects, since encoding to PNG bytes
+    up front (rather than per-frame at render time) keeps the interactive
+    grid responsive.
+
+    Attributes
+    ----------
+    id : str
+        Cell video identifier, carried over from the source
+        :class:`~DuckSeg.experiment_evaluator.CellVideo`.
+    frames : list of bytes
+        PNG-encoded frame images.
+    size : tuple of (int, int)
+        Original (pre-encoding) frame shape, used for grid layout sorting.
+    """
     id: str
     frames: list[bytes] # png
     size: tuple[int,int] # video size
 
 def show_video_grid_jupyter(video_list, outliers=None, manual_outliers=None, container_width=1200):
     """
-    Show a grid of videos with independent sliders in Jupyter.
-    Uses Image widgets instead of matplotlib with clear_output.
-    Includes global controls to synchronize all videos and control image sizes.
-    
-    Args:
-        video_list: List of Video dataclass objects
-        outliers: Set of video IDs that should be highlighted with a border
-        container_width: Total width available for the grid (default 1200px)
-        
-    Returns:
-        update_outliers: Function to update which videos are highlighted
+    Display a synchronized, checkbox-annotatable grid of cell videos.
+
+    Each cell gets its own play/slider control plus a checkbox to mark it
+    as a manual outlier, alongside global controls to play every video in
+    sync and resize thumbnails. Videos already flagged as outliers (either
+    automatically or manually) are drawn with a red border and can be
+    hidden via the "Show outliers" toggle. This is the human-review step
+    of the example notebook's outlier-filtering stage: run automated
+    filters first (:mod:`DuckSeg.outlier_filters`), then use this grid to
+    catch anything they missed or over-flagged.
+
+    Uses ``ipywidgets`` Image widgets rather than matplotlib, so it stays
+    responsive with hundreds of cells.
+
+    Parameters
+    ----------
+    video_list : list of Video
+        Cell videos to display, e.g. from :func:`normalize_videos_for_display`.
+    outliers : set of str, optional
+        Video IDs to draw with a red outlier border, e.g. from
+        :func:`DuckSeg.outlier_filters.outlier_vids`. Mutated in place to
+        include ``manual_outliers``.
+    manual_outliers : set of str, optional
+        Video IDs whose checkbox should start checked. Mutated in place as
+        the user (un)checks boxes in the grid.
+    container_width : int, optional
+        Total pixel width available for laying out the grid; thumbnails
+        wrap to a new row once this width is exceeded.
+
+    Returns
+    -------
+    Callable[[Iterable[str], Iterable[str]], None]
+        A function ``update_outliers(new_outliers, manuals)`` that
+        refreshes which videos are shown as outliers — used by the example
+        notebook to push the result of running outlier filters after the
+        grid is already displayed.
     """
     if manual_outliers is None:
         manual_outliers = set()
@@ -271,12 +332,35 @@ def show_video_grid_jupyter(video_list, outliers=None, manual_outliers=None, con
     return update_outliers_function
 
 def grayscale_to_green_png_bytes(img: np.ndarray, norm=None) -> list:
+    """
+    Encode a grayscale frame as a green-channel-only PNG (bytes).
+
+    Fluorescence micrographs are conventionally displayed on a black
+    background in the color of the imaged channel; encoding as green here
+    matches that convention for the display grid
+    (:func:`show_video_grid_jupyter`).
+
+    Parameters
+    ----------
+    img : numpy.ndarray
+        2D grayscale frame.
+    norm : tuple of (float, float), optional
+        ``(min, max)`` values mapped to full black/full intensity. If not
+        given, uses ``img``'s own min/max (per-frame normalization); pass
+        a shared value across a video's frames (e.g. from :func:`min_max`)
+        for consistent brightness across the video instead.
+
+    Returns
+    -------
+    bytes
+        PNG-encoded image bytes.
+    """
     # Normalize image to 0–255
+    img_norm = img.astype(np.float32)
     if norm is None:
         norm = (img_norm.min(), img_norm.max())
-    img_norm = img.astype(np.float32)
     img_norm -= norm[0]
-    img_norm /= norm[1]
+    img_norm /= (norm[1] - norm[0])
     img_norm = (img_norm * 255).astype(np.uint8)
 
     # Create green image (height, width, 3), green channel populated
@@ -295,13 +379,55 @@ def grayscale_to_green_png_bytes(img: np.ndarray, norm=None) -> list:
     return buffer.getvalue()
 
 def min_max(vids):
+    """
+    Compute the global min/max pixel value across a set of cell videos.
+
+    Used to derive a shared brightness normalization for
+    :func:`grayscale_to_green_png_bytes` so a video's own frames are all
+    displayed on a consistent intensity scale.
+
+    Parameters
+    ----------
+    vids : list of DuckSeg.experiment_evaluator.CellVideo
+        Cell videos to scan.
+
+    Returns
+    -------
+    tuple of (float, float)
+        The ``(min, max)`` pixel value across every frame of every video.
+    """
     min_val = min(frame.min() for vid in vids for frame in vid.frames)
     max_val = max(frame.max() for vid in vids for frame in vid.frames)
     return min_val, max_val
 
 def normalize_videos_for_display(vids: list['CellVideo'], range_modifier=4) -> list[Video]:
     """
-    Makes sure frame sizes match and converts images from greyscale to greenscale
+    Prepare cell videos for :func:`show_video_grid_jupyter`.
+
+    For each cell video: pads frames/masks to a common size (see
+    :meth:`~DuckSeg.experiment_evaluator.CellVideo.homogenize_size`),
+    blacks out the (expanded) laser ROI rows for visual reference (see
+    :meth:`~DuckSeg.experiment_evaluator.CellVideo.video_with_ranges`), and
+    encodes every frame as a green-on-black PNG normalized to that video's
+    own brightness range (see :func:`grayscale_to_green_png_bytes` and
+    :func:`min_max`).
+
+    Parameters
+    ----------
+    vids : list of DuckSeg.experiment_evaluator.CellVideo
+        Cell videos to prepare for display.
+    range_modifier : float, optional
+        ROI width factor used when blacking out the laser rows. Note the
+        value passed here is currently ignored in favor of a hardcoded
+        ``4`` internally — pass ``range_modifier`` consistently to
+        :meth:`~DuckSeg.experiment_evaluator.CellVideo.calculate_brightness`
+        elsewhere in the notebook if a different value is used for
+        scoring.
+
+    Returns
+    -------
+    list of Video
+        Display-ready videos, in the same order as ``vids``.
     """
     vids = [vid.homogenize_size() for vid in vids]
     norms = [min_max([vid]) for vid in vids]
