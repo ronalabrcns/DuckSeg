@@ -431,5 +431,5 @@ def normalize_videos_for_display(vids: list['CellVideo'], range_modifier=4) -> l
     """
     vids = [vid.homogenize_size() for vid in vids]
     norms = [min_max([vid]) for vid in vids]
-    vids2 = [Video(id=vid.id,frames=[grayscale_to_green_png_bytes(frame, norm=norm) for frame in vid.video_with_ranges(range_modifier=4)], size=vid.frames[0].shape) for vid, norm in zip(vids, norms)]
+    vids2 = [Video(id=vid.id,frames=[grayscale_to_green_png_bytes(frame, norm=norm) for frame in vid.video_with_ranges(range_modifier=range_modifier)], size=vid.frames[0].shape) for vid, norm in zip(vids, norms)]
     return vids2

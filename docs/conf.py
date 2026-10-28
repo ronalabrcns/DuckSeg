@@ -3,24 +3,36 @@ import os
 
 sys.path.insert(0, os.path.abspath('../src'))
 
+import DuckSeg
+
 project = 'DuckSeg'
 copyright = '2026, RonaLab RCNS'
 author = 'DuckSeg Contributors'
-release = '0.1.0'
+release = DuckSeg.__version__
+version = release
 
 extensions = [
     'sphinx.ext.autodoc',
-	'sphinx.ext.autosummary',
     'sphinx.ext.napoleon',
     'sphinx.ext.viewcode',
+    'sphinx.ext.intersphinx',
+    'sphinx.ext.mathjax',
+    'sphinx_copybutton',
 ]
 
-templates_path = ['_templates']
+intersphinx_mapping = {
+    'python': ('https://docs.python.org/3', None),
+    'numpy': ('https://numpy.org/doc/stable', None),
+    'matplotlib': ('https://matplotlib.org/stable', None),
+}
+
 exclude_patterns = ['_build']
 
 html_theme = 'pydata_sphinx_theme'
 html_static_path = ['_static']
 html_title = 'DuckSeg Documentation'
+html_favicon = '_static/duckseg_logo_nobg.png'
+html_baseurl = 'https://duckseg.readthedocs.io/en/latest/'
 
 html_theme_options = {
     "github_url": "https://github.com/ronalabrcns/DuckSeg",
@@ -44,12 +56,14 @@ napoleon_numpy_docstring = True
 # description" warnings).
 napoleon_use_ivar = True
 
+autodoc_typehints = 'description'
+
 autodoc_default_options = {
     'members': True,
     'member-order': 'bysource',
     'undoc-members': True,
 }
 
-# CellSAM pulls in large model weights and CUDA-only dependencies that are
-# unnecessary (and often unavailable) just to build API documentation.
-autodoc_mock_imports = ["cellSAM"]
+# CellSAM and PyTorch pull in large model weights and CUDA-only dependencies
+# that are unnecessary (and often unavailable) just to build API documentation.
+autodoc_mock_imports = ["cellSAM", "torch"]

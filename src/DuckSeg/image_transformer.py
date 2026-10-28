@@ -212,7 +212,10 @@ def generate_masks_using_filters_and_transforms(batch, experiment_filter, frame_
     # apply experiment filter and frame indices
     experiments = apply_experiment_filter(batch.experiments(), experiment_filter)
     assert len(experiments) > 0, "No experiments after applying `experiment_filter`"
-    frame_indices = calculate_frame_indices(frame_filter, experiments[0].max_len-1)
+    n_frames = experiments[0].max_len
+    if n_frames is None:
+        n_frames = len(experiments[0].frames_u8())
+    frame_indices = calculate_frame_indices(frame_filter, n_frames-1)
     all_frames = []
     for experiment in experiments:
         frames = experiment.frames()
