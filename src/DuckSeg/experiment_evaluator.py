@@ -259,8 +259,19 @@ def evalute_batch(batch: ExperimentBatch, start = 1, transforms=None, use_cache=
     use_cache : bool, optional
         If ``True`` (default), experiments that already have a cached
         :class:`ExperimentEvaluator` are loaded from disk instead of being
-        re-processed.
+        re-segmented. If the ROI lines were changed since the cache was
+        saved (e.g. with the ROI editor), the cells are re-tracked once on
+        the new lines and the cache is updated; CellSAM is not re-run. The
+        cache does not know about ``transforms``: after changing them, run
+        once with ``use_cache=False``. A cache saved with a different
+        number of frames than ``batch.max_len`` is also discarded.
+
+    Returns
+    -------
+    list of CellVideo
+        The tracked cell videos of every experiment in the batch.
     """
+    videos = []
     for experiment in batch.experiments():
         print(f"Evaluating {experiment.name}")
         evaluator = ExperimentEvaluator.load_experiment(experiment) if use_cache else None
