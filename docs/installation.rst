@@ -10,6 +10,28 @@ a CPU. If you have no local GPU, use the Google Colab notebook instead.
    :local:
    :depth: 1
 
+CellSAM model license
+=====================
+
+DuckSeg itself is MIT-licensed. The CellSAM model weights it uses are
+third-party assets from the Van Valen lab, licensed under a modified
+Apache 2.0 license for **non-commercial academic use only**. They are
+downloaded automatically the first time DuckSeg segments a frame (and
+then cached in ``~/.deepcell/models``), but you have to accept the license
+once first:
+
+1. Log in at `huggingface.co <https://huggingface.co>`_ (a free account is
+   enough), open the model page
+   `vanvalenlab/cellsam <https://huggingface.co/vanvalenlab/cellsam>`_
+   and click *I agree to the license terms*.
+2. Create a *Read* token at
+   `huggingface.co/settings/tokens <https://huggingface.co/settings/tokens>`_.
+   You provide it as ``HF_TOKEN`` (see below).
+
+A DeepCell access token from `users.deepcell.org <https://users.deepcell.org/>`_,
+set as ``DEEPCELL_ACCESS_TOKEN``, still works instead of the Hugging Face
+token. See :mod:`DuckSeg.model_loader` for the details.
+
 Google Colab (no installation)
 ==============================
 
@@ -21,11 +43,11 @@ session to reconnect before continuing). By default the notebook downloads
 an example dataset; set ``DATA_SOURCE = "drive"`` and ``DRIVE_DIR`` to
 analyse your own videos from Google Drive.
 
-CellSAM needs a DeepCell access token. Create a token on
-`users.deepcell.org <https://users.deepcell.org/>`_, store it in the Colab
-*Secrets* panel under the name ``DEEPCELL_ACCESS_TOKEN`` and enable
-notebook access for it. The notebook copies it into the environment
-variable that CellSAM reads.
+Accept the CellSAM license and create a Hugging Face token (see
+`CellSAM model license`_). Store the token in the Colab *Secrets* panel
+under the name ``HF_TOKEN`` and enable notebook access for it. The
+notebook downloads the model in the *Download the CellSAM model* cell and
+tells you there if the license has not been accepted yet.
 
 Local installation
 ==================
@@ -57,19 +79,25 @@ Local installation
       pip install -e .
 
 3. Install `CellSAM <https://github.com/vanvalenlab/cellSAM>`_. It is not
-   on PyPI and is therefore not part of the package dependencies.
+   on PyPI and is therefore not part of the package dependencies. DuckSeg
+   is tested with this commit:
 
    .. code-block:: bash
 
-      pip install git+https://github.com/vanvalenlab/cellSAM.git
+      pip install git+https://github.com/vanvalenlab/cellSAM.git@362a8e521bcd7313d5cb280bcd4cfc12977c1e9f
 
-4. Make your DeepCell access token (see above) available before starting
-   Jupyter.
+4. Accept the CellSAM license (see `CellSAM model license`_) and make your
+   Hugging Face token available before starting Jupyter, either once with
+   ``hf auth login`` or as an environment variable:
 
    .. code-block:: bash
 
-      export DEEPCELL_ACCESS_TOKEN="<your token>"     # Linux, macOS
-      set DEEPCELL_ACCESS_TOKEN=<your token>           # Windows (cmd)
+      export HF_TOKEN="<your token>"     # Linux, macOS
+      set HF_TOKEN=<your token>          # Windows (cmd)
+
+   The weights are downloaded on the first segmentation (or explicitly with
+   :func:`DuckSeg.model_loader.load_cellsam_model`). After that, no token is
+   needed on this computer.
 
 5. Start Jupyter and open a notebook from ``notebooks/``.
 
