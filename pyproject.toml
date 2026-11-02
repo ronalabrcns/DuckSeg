@@ -9,7 +9,9 @@ dynamic = ["version", "description"]
 readme = "README.md"
 requires-python = ">=3.10"
 # CellSAM (and with it PyTorch) is not on PyPI and is installed separately:
-#   pip install git+https://github.com/vanvalenlab/cellSAM.git
+#   pip install git+https://github.com/vanvalenlab/cellSAM.git@362a8e521bcd7313d5cb280bcd4cfc12977c1e9f
+# Its model weights are downloaded on first use from Hugging Face
+# (vanvalenlab/cellsam, gated, non-commercial license), see DuckSeg.model_loader.
 dependencies = [
     "numpy",
     "pandas",
@@ -23,6 +25,7 @@ dependencies = [
     "imageio-ffmpeg",
     "ipython",
     "ipywidgets",
+    "huggingface_hub",
 ]
 classifiers = [ "Programming Language :: Python :: 3", "License :: OSI Approved :: MIT License", "Operating System :: OS Independent",]
 
