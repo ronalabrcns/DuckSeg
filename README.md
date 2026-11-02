@@ -43,6 +43,9 @@ reproducible one.
 It runs on an example dataset; switch `DATA_SOURCE` to `"drive"` to analyse
 your own videos from Google Drive.
 
+**Prefer forms to code?** [`DuckSeg_Example_Form.ipynb`](https://colab.research.google.com/github/ronalabrcns/DuckSeg/blob/main/notebooks/DuckSeg_Example_Form.ipynb) runs the same
+pipeline with text fields, checkboxes and sliders, and the code is hidden.
+
 ### Local installation
 
 ```bash
