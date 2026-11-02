@@ -188,6 +188,12 @@ License
 
 DuckSeg is released under the MIT License.
 
+DuckSeg segments nuclei with CellSAM, whose model weights are third-party
+assets licensed under a modified Apache 2.0 license for non-commercial
+academic use only. Users accept this license on
+`Hugging Face <https://huggingface.co/vanvalenlab/cellsam>`_ before the
+weights are downloaded (:doc:`installation`).
+
 .. toctree::
    :maxdepth: 2
    :caption: Contents:

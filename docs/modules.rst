@@ -32,6 +32,7 @@ Segmentation, tracking, and scoring
    :maxdepth: 1
 
    api/experiment_evaluator
+   api/model_loader
    api/aligner
 
 Review, filtering, and export
