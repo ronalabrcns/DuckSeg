@@ -2,11 +2,25 @@
 Troubleshooting
 ===============
 
-CellSAM fails to start or asks for authentication
-    CellSAM downloads its model with a DeepCell access token. Make sure
-    ``DEEPCELL_ACCESS_TOKEN`` is set in the environment of the notebook
-    kernel (in Colab: Secrets, see :doc:`installation`). Restart the
-    kernel after setting it.
+*Access to the CellSAM weights was refused* (``GatedRepoError``, ``401``)
+    The CellSAM license has not been accepted on Hugging Face for the
+    account your token belongs to. Open
+    `vanvalenlab/cellsam <https://huggingface.co/vanvalenlab/cellsam>`_
+    while logged in with that account, click *I agree to the license
+    terms*, and run the cell again (:doc:`installation`).
+
+*No CellSAM weights found and no token to download them*
+    ``HF_TOKEN`` is not set in the environment of the notebook kernel. In
+    Colab add it under Secrets and switch on notebook access; locally run
+    ``hf auth login`` or set ``HF_TOKEN``, then restart the kernel.
+
+*DEEPCELL_ACCESS_TOKEN not found* or *API token is not valid*
+    The weights are being fetched from DeepCell because no Hugging Face
+    token was found. Set ``HF_TOKEN`` instead (see above), or renew the
+    DeepCell token on `users.deepcell.org <https://users.deepcell.org/>`_.
+
+The model download stopped halfway
+    Delete ``~/.deepcell/models/cellsam_v1.2`` (if it exists) and run again.
 
 ``CUDA out of memory``
     DuckSeg frees the GPU cache and retries once. If it keeps failing,

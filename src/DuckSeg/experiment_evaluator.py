@@ -23,7 +23,7 @@ batch with CellSAM, tracks each detected cell across frames into a
 
 Frame-level mask generation itself (:func:`generate_mask`,
 ``generate_mask_inner``) is CellSAM-backed and lazily loads the model
-into ``cellsam_model`` on first use.
+into ``cellsam_model`` on first use (see :mod:`DuckSeg.model_loader`).
 """
 
 __all__ = [
@@ -74,7 +74,8 @@ from DuckSeg.aligner import transform_2d, BilateralFilter
 import cv2
 import torch
 
-from cellSAM import segment_cellular_image, get_model
+from cellSAM import segment_cellular_image
+from DuckSeg.model_loader import load_cellsam_model
 import matplotlib.pyplot as plt
 
 cellsam_model = None
@@ -391,7 +392,8 @@ def generate_mask_inner(frame, bounding_boxes=None):
     Run CellSAM segmentation on a single frame.
 
     Lazily loads and caches the CellSAM model in the module-level
-    ``cellsam_model`` on first call. On a CUDA out-of-memory error, clears
+    ``cellsam_model`` on first call, with
+    :func:`DuckSeg.model_loader.load_cellsam_model`. On a CUDA out-of-memory error, clears
     the GPU cache and retries once.
 
     Parameters
@@ -411,7 +413,7 @@ def generate_mask_inner(frame, bounding_boxes=None):
     """
     global cellsam_model
     if cellsam_model is None:
-        cellsam_model = get_model()
+        cellsam_model = load_cellsam_model()
     try:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         mask, embedding, bounding_boxes = segment_cellular_image(frame, device=device.type, model = cellsam_model, bounding_boxes=bounding_boxes, bbox_threshold=0.7)

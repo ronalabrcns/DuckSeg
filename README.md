@@ -31,11 +31,17 @@ reproducible one.
 
 ### Google Colab (no installation)
 
-Open [`DuckSeg_Example.ipynb`](https://colab.research.google.com/github/ronalabrcns/DuckSeg/blob/main/notebooks/DuckSeg_Example.ipynb),
-choose a GPU runtime, and add your DeepCell token (from
-[users.deepcell.org](https://users.deepcell.org/)) to the Colab *Secrets*
-panel as `DEEPCELL_ACCESS_TOKEN`. It runs on an example dataset; switch
-`DATA_SOURCE` to `"drive"` to analyse your own videos from Google Drive.
+1. Accept the CellSAM model license once: log in at
+   [huggingface.co](https://huggingface.co), open
+   [vanvalenlab/cellsam](https://huggingface.co/vanvalenlab/cellsam) and click
+   *I agree to the license terms* (see [License](#license)).
+2. Create a *Read* token at [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens).
+3. Open [`DuckSeg_Example.ipynb`](https://colab.research.google.com/github/ronalabrcns/DuckSeg/blob/main/notebooks/DuckSeg_Example.ipynb),
+   choose a GPU runtime, and add the token to the Colab *Secrets* panel as
+   `HF_TOKEN` (with notebook access on).
+
+It runs on an example dataset; switch `DATA_SOURCE` to `"drive"` to analyse
+your own videos from Google Drive.
 
 ### Local installation
 
@@ -43,10 +49,14 @@ panel as `DEEPCELL_ACCESS_TOKEN`. It runs on an example dataset; switch
 git clone https://github.com/ronalabrcns/DuckSeg.git
 cd DuckSeg
 pip install -e .
-pip install git+https://github.com/vanvalenlab/cellSAM.git
-export DEEPCELL_ACCESS_TOKEN="<your token>"   # Windows: set DEEPCELL_ACCESS_TOKEN=<your token>
+pip install git+https://github.com/vanvalenlab/cellSAM.git@362a8e521bcd7313d5cb280bcd4cfc12977c1e9f
+hf auth login      # paste your Hugging Face token (license accepted, see above)
 python -m jupyter lab
 ```
+
+The CellSAM weights are downloaded from Hugging Face on the first run and
+cached in `~/.deepcell/models`. A DeepCell token (`DEEPCELL_ACCESS_TOKEN`)
+still works instead of the Hugging Face login.
 
 A CUDA GPU is strongly recommended. `requirements.txt` is a pinned snapshot
 of a working Linux/NVIDIA environment. See the
@@ -108,4 +118,10 @@ Advances publication (details to follow) and link to this repository.
 
 ## License
 
-[MIT](LICENSE)
+DuckSeg code: [MIT](LICENSE).
+
+The CellSAM model weights used for segmentation are **not** covered by this
+license. They are third-party assets from the Van Valen lab under a
+[modified Apache 2.0 license](https://huggingface.co/vanvalenlab/cellsam/blob/main/LICENSE)
+for **non-commercial academic use only**, which each user accepts on
+[Hugging Face](https://huggingface.co/vanvalenlab/cellsam) before the first download.
