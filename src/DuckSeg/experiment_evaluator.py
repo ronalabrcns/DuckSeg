@@ -1458,8 +1458,9 @@ class CellVideo:
         range_modifier : float, optional
             Forwarded to :meth:`calculate_brightness`.
         baseline_correct : bool, optional
-            If ``True``, subtract the first frame's value from the whole
-            series so that it starts at zero. Default ``False`` (raw score).
+            If ``True``, correct the series to its first frame: ``Diff`` has
+            the first value subtracted (starts at 0), ``Ratio`` is divided by
+            it (starts at 1). Default ``False`` (raw score).
 
         Returns
         -------
@@ -1473,12 +1474,14 @@ class CellVideo:
         """
         if score == ScoreType.Diff:
             values = self.calculate_brightness_diff(range_modifier=range_modifier)
+            if baseline_correct:
+                values = values - values[0]
         elif score == ScoreType.Ratio:
             values = self.calculate_brightness_ratio(range_modifier=range_modifier)
+            if baseline_correct:
+                values = values / values[0]
         else:
             raise AssertionError
-        if baseline_correct:
-            values = values - values[0]
         return values
 
     def plot_brightness_ratio(self, range_modifier=1):
@@ -1753,9 +1756,9 @@ def calc_brightness_score(batch: ExperimentBatch, score_type: ScoreType = ScoreT
     print_progress : bool, optional
         If ``True``, print each experiment's name as it's processed.
     baseline_correct : bool, optional
-        If ``True``, subtract the value of the first frame from every
-        score series so that the curves start at zero. Default ``False``
-        (raw scores).
+        If ``True``, correct every score series to its first frame: ``Diff``
+        has the first value subtracted (curves start at 0), ``Ratio`` is
+        divided by it (curves start at 1). Default ``False`` (raw scores).
 
     Returns
     -------
@@ -1794,9 +1797,9 @@ def calculate_brightness_score_for_experiments(experiments: list[Experiment], sc
     print_progress : bool, optional
         If ``True``, print each experiment's name as it's processed.
     baseline_correct : bool, optional
-        If ``True``, subtract the value of the first frame from every
-        score series so that the curves start at zero. Default ``False``
-        (raw scores).
+        If ``True``, correct every score series to its first frame: ``Diff``
+        has the first value subtracted (curves start at 0), ``Ratio`` is
+        divided by it (curves start at 1). Default ``False`` (raw scores).
 
     Returns
     -------
@@ -1843,9 +1846,9 @@ def calculate_brightness_score_for_videos(videos: list[CellVideo], score_type: S
         Unused; accepted for signature symmetry with
         :func:`calc_brightness_score`.
     baseline_correct : bool, optional
-        If ``True``, subtract the value of the first frame from every
-        score series so that the curves start at zero. Default ``False``
-        (raw scores).
+        If ``True``, correct every score series to its first frame: ``Diff``
+        has the first value subtracted (curves start at 0), ``Ratio`` is
+        divided by it (curves start at 1). Default ``False`` (raw scores).
 
     Returns
     -------
@@ -1990,9 +1993,9 @@ def plot_brightness_score(batch: ExperimentBatch, score_type: ScoreType = ScoreT
     color : str, optional
         Line color (any matplotlib color, e.g. ``"tab:red"`` or ``"#D55E00"``).
     baseline_correct : bool, optional
-        If ``True``, subtract the value of the first frame from every
-        score series so that the curves start at zero. Default ``False``
-        (raw scores).
+        If ``True``, correct every score series to its first frame: ``Diff``
+        has the first value subtracted (curves start at 0), ``Ratio`` is
+        divided by it (curves start at 1). Default ``False`` (raw scores).
     save_path : str, optional
         If given, the figure is also saved to this file (the format follows
         the extension, e.g. ``"recruitment.png"``) at 300 dpi.
@@ -2024,9 +2027,9 @@ def plot_brightness_score_double(ctrl: ExperimentBatch, cnnd: ExperimentBatch, s
         Predicate selecting which cells to include, applied to both
         batches.
     baseline_correct : bool, optional
-        If ``True``, subtract the value of the first frame from every
-        score series so that the curves start at zero. Default ``False``
-        (raw scores).
+        If ``True``, correct every score series to its first frame: ``Diff``
+        has the first value subtracted (curves start at 0), ``Ratio`` is
+        divided by it (curves start at 1). Default ``False`` (raw scores).
     save_path : str, optional
         If given, the figure is also saved to this file (the format follows
         the extension, e.g. ``"recruitment.png"``) at 300 dpi.
@@ -2063,9 +2066,9 @@ def plot_brightness_scores(batches: list[ExperimentBatch], score_type: ScoreType
         Predicate selecting which cells to include, applied to every
         batch.
     baseline_correct : bool, optional
-        If ``True``, subtract the value of the first frame from every
-        score series so that the curves start at zero. Default ``False``
-        (raw scores).
+        If ``True``, correct every score series to its first frame: ``Diff``
+        has the first value subtracted (curves start at 0), ``Ratio`` is
+        divided by it (curves start at 1). Default ``False`` (raw scores).
     save_path : str, optional
         If given, the figure is also saved to this file (the format follows
         the extension, e.g. ``"recruitment.png"``) at 300 dpi.
@@ -2153,9 +2156,9 @@ def plot_brightness_score_series(batch: ExperimentBatch, score_type: ScoreType =
     cell_filter : Callable[[CellVideo], bool], optional
         Predicate selecting which cells to include.
     baseline_correct : bool, optional
-        If ``True``, subtract the value of the first frame from every
-        score series so that the curves start at zero. Default ``False``
-        (raw scores).
+        If ``True``, correct every score series to its first frame: ``Diff``
+        has the first value subtracted (curves start at 0), ``Ratio`` is
+        divided by it (curves start at 1). Default ``False`` (raw scores).
     """
     # what do I want to plot?
     # the distribution of the score over time

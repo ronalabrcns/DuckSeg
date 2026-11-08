@@ -33,9 +33,10 @@ def export_cell_videos(videos: list[CellVideo], output_path: str, range_modifier
         ROI width factor forwarded to
         :meth:`~DuckSeg.experiment_evaluator.CellVideo.calculate_brightness`.
     baseline_correct : bool, optional
-        If ``True``, subtract the first frame's value from the ``_diff`` and
-        ``_ratio`` columns so that these curves start at zero. The
-        ``_normal`` and ``_ROI`` columns always stay raw. Default ``False``.
+        If ``True``, correct the score columns to their first frame:
+        ``_diff`` has the first value subtracted (starts at 0), ``_ratio`` is
+        divided by it (starts at 1). The ``_normal`` and ``_ROI`` columns
+        always stay raw. Default ``False``.
     """
     columns = {}
     for video in videos:
@@ -48,7 +49,7 @@ def export_cell_videos(videos: list[CellVideo], output_path: str, range_modifier
         ratio = lasered / normal
         if baseline_correct:
             diff = diff - diff[0]
-            ratio = ratio - ratio[0]
+            ratio = ratio / ratio[0]
         columns[f'{video.id}_diff'] = diff
         columns[f'{video.id}_ratio'] = ratio
 

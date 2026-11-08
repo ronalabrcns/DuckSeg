@@ -41,10 +41,11 @@ The implementation is
 .. note::
 
    By default the scores are the raw values. Pass ``baseline_correct=True``
-   to the plot, score and export functions to subtract the first time
-   point of every cell so that the curves start at zero (see
-   :doc:`guides/compare_conditions` and :doc:`guides/export_results`).
-   Photobleaching is not corrected.
+   to the plot, score and export functions to correct every cell to its
+   first time point: :math:`\mathrm{Diff}(t) - \mathrm{Diff}(0)`, so these
+   curves start at 0, and :math:`\mathrm{Ratio}(t) / \mathrm{Ratio}(0)`, so
+   these curves start at 1 (see :doc:`guides/compare_conditions` and
+   :doc:`guides/export_results`). Photobleaching is not corrected.
 
 The irradiated band and ``range_modifier``
 ------------------------------------------
@@ -127,7 +128,8 @@ Limitations
 * The irradiated stripe is assumed to be **horizontal** (a set of image
   rows).
 * Photobleaching and background variation are not corrected. Baseline
-  correction (subtracting the first frame) is optional.
+  correction to the first frame (subtraction for ``Diff``, division for
+  ``Ratio``) is optional.
 * Only the first stripe that intersects a cell is used for its score.
 * Tracking relies on mask similarity between consecutive frames, so
   fast-moving, overlapping or dividing nuclei may be mislinked. Review the
