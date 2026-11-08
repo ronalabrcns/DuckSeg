@@ -39,10 +39,11 @@ with the ``range_modifier`` you pass.
 Baseline-corrected curves
 =========================
 
-By default the values are raw. With ``baseline_correct=True`` the
-``_diff`` and ``_ratio`` columns are shifted so that each curve starts at
-zero (the first frame's value is subtracted). The ``_normal`` and ``_ROI``
-columns always stay raw.
+By default the values are raw. With ``baseline_correct=True`` the score
+columns are corrected to the first frame of each cell: the first value is
+subtracted from ``_diff`` (each curve starts at 0) and ``_ratio`` is
+divided by its first value (each curve starts at 1). The ``_normal`` and
+``_ROI`` columns always stay raw.
 
 .. code-block:: python
 

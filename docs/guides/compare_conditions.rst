@@ -75,9 +75,10 @@ Baseline correction and saving a figure
 All the mean-curve plots accept two options:
 
 ``baseline_correct=True``
-    Subtract the first frame's value from the series of every cell, so
-    that all curves start at zero. The default (``False``) plots the raw
-    scores. ``plot_brightness_score_series`` accepts it too.
+    Correct the series of every cell to its first frame. The first value
+    is subtracted from ``Diff`` (curves start at 0) and ``Ratio`` is
+    divided by it (curves start at 1). The default (``False``) plots the
+    raw scores. ``plot_brightness_score_series`` accepts it too.
 
 ``save_path="recruitment.png"``
     Also save the figure to this file (300 dpi; the format follows the

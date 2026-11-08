@@ -43,6 +43,11 @@ session to reconnect before continuing). By default the notebook downloads
 an example dataset; set ``DATA_SOURCE = "drive"`` and ``DRIVE_DIR`` to
 analyse your own videos from Google Drive.
 
+If you would rather not edit code, open
+`DuckSeg_Example_Form.ipynb <https://colab.research.google.com/github/ronalabrcns/DuckSeg/blob/main/notebooks/DuckSeg_Example_Form.ipynb>`_
+instead: the same pipeline as Colab forms (text fields, checkboxes,
+sliders) with the code hidden.
+
 Accept the CellSAM license and create a Hugging Face token (see
 `CellSAM model license`_). Store the token in the Colab *Secrets* panel
 under the name ``HF_TOKEN`` and enable notebook access for it. The
