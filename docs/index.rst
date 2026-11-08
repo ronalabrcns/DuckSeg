@@ -175,13 +175,6 @@ Data expected on disk, per experiment, inside a batch directory
     <NAME>_<...>.nd2        # or .tif / .tiff
     <NAME>_<...>_ROI.tif    # binary laser-ROI mask, same frame size
 
-Citing DuckSeg
-==============
-
-If DuckSeg is useful in your research, please cite the associated
-Bioinformatics Advances publication (details to be added upon
-publication) and/or link to the `GitHub repository
-<https://github.com/ronalabrcns/DuckSeg>`_.
 
 License
 =======
