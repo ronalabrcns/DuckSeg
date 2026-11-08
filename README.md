@@ -114,11 +114,6 @@ export_cell_videos([v for v in vids if cell_filter(v)], "brightness_scores.csv",
 | [Troubleshooting](https://duckseg.readthedocs.io/en/latest/troubleshooting.html) | Common errors and fixes |
 | [API reference](https://duckseg.readthedocs.io/en/latest/modules.html) | All modules and functions |
 
-## Citing DuckSeg
-
-If DuckSeg helps your research, please cite the associated Bioinformatics
-Advances publication (details to follow) and link to this repository.
-
 ## License
 
 DuckSeg code: [MIT](LICENSE).
