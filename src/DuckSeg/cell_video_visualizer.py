@@ -56,6 +56,36 @@ class Video:
     frames: list[bytes] # png
     size: tuple[int,int] # video size
 
+_OUTLIER_RED = (214, 39, 40)
+
+def _add_red_frame(png: bytes) -> bytes:
+    """
+    Return a copy of a PNG image with a red frame drawn into its pixels.
+
+    Google Colab draws neither ``Layout.border`` nor CSS injected through
+    widgets, so outliers are marked in the image itself, which every front
+    end shows.
+
+    Parameters
+    ----------
+    png : bytes
+        PNG-encoded image.
+
+    Returns
+    -------
+    bytes
+        PNG-encoded image with the frame.
+    """
+    img = np.array(Image.open(BytesIO(png)).convert("RGB"))
+    thickness = max(2, min(img.shape[:2]) // 15)
+    img[:thickness] = _OUTLIER_RED
+    img[-thickness:] = _OUTLIER_RED
+    img[:, :thickness] = _OUTLIER_RED
+    img[:, -thickness:] = _OUTLIER_RED
+    buffer = BytesIO()
+    Image.fromarray(img).save(buffer, format="PNG")
+    return buffer.getvalue()
+
 def show_video_grid_jupyter(video_list, outliers=None, manual_outliers=None, container_width=1200):
     """
     Display a synchronized, checkbox-annotatable grid of cell videos.
@@ -63,7 +93,8 @@ def show_video_grid_jupyter(video_list, outliers=None, manual_outliers=None, con
     Each cell gets its own play/slider control plus a checkbox to mark it
     as a manual outlier, alongside global controls to play every video in
     sync and resize thumbnails. Videos already flagged as outliers (either
-    automatically or manually) are drawn with a red border and can be
+    automatically or manually) are drawn with a red border and a red ID
+    label ("excluded") and can be
     hidden via the "Show outliers" toggle. This is the human-review step
     of the example notebook's outlier-filtering stage: run automated
     filters first (:mod:`DuckSeg.outlier_filters`), then use this grid to
@@ -146,6 +177,7 @@ def show_video_grid_jupyter(video_list, outliers=None, manual_outliers=None, con
     img_widgets = []
     video_containers = []  # Store containers for border styling
     checkboxes = []
+    id_labels = []
     
     def get_border_style(video_id, is_outlier):
         """Get CSS border style based on outlier status"""
@@ -153,10 +185,36 @@ def show_video_grid_jupyter(video_list, outliers=None, manual_outliers=None, con
             return "3px solid red"
         else:
             return "1px solid #ddd"
-    
+
+    def label_html(video_id, is_outlier):
+        """ID label; red with an 'excluded' tag for outliers"""
+        if is_outlier:
+            return (f"<div style='text-align: center; font-weight: bold; padding: 2px; "
+                    f"background-color: #d62728; color: white;'>{video_id} &middot; excluded</div>")
+        return (f"<div style='text-align: center; font-weight: bold; padding: 2px; "
+                f"background-color: #f0f0f0;'>{video_id}</div>")
+
+    framed_pngs = {}  # (video index, frame index) -> PNG with the red frame
+
+    def frame_png(i, frame_idx):
+        """PNG to show for a frame of video i, with a red frame if it is an outlier"""
+        video = video_list[i]
+        if video.id not in outliers:
+            return video.frames[frame_idx]
+        key = (i, frame_idx)
+        if key not in framed_pngs:
+            framed_pngs[key] = _add_red_frame(video.frames[frame_idx])
+        return framed_pngs[key]
+
+    def set_outlier_style(i, is_outlier):
+        """Mark container i as (not) an outlier and redraw its current frame."""
+        video_containers[i].layout.border = get_border_style(video_list[i].id, is_outlier)
+        id_labels[i].value = label_html(video_list[i].id, is_outlier)
+        img_widgets[i].value = frame_png(i, individual_sliders[i].value)
+
     def create_video_players(image_size):
         """Create all video player widgets with specified image size"""
-        nonlocal players, individual_sliders, individual_plays, img_widgets, video_containers, checkboxes
+        nonlocal players, individual_sliders, individual_plays, img_widgets, video_containers, checkboxes, id_labels
         
         players = []
         individual_sliders = []
@@ -164,6 +222,7 @@ def show_video_grid_jupyter(video_list, outliers=None, manual_outliers=None, con
         img_widgets = []
         video_containers = []
         checkboxes = []
+        id_labels = []
         
         for i, video in enumerate(video_list):
             max_frame = len(video.frames) - 1
@@ -178,7 +237,7 @@ def show_video_grid_jupyter(video_list, outliers=None, manual_outliers=None, con
             
             # Create Image widget with dynamic size
             img_widget = widgets.Image(
-                value=video.frames[0],
+                value=frame_png(i, 0),
                 format='png',
                 width=image_size,
                 height=int(image_size * 0.75)  # Maintain aspect ratio
@@ -189,9 +248,8 @@ def show_video_grid_jupyter(video_list, outliers=None, manual_outliers=None, con
             is_outlier = video.id in outliers
             
             # Video ID label
-            id_label = widgets.HTML(
-                value=f"<div style='text-align: center; font-weight: bold; padding: 2px; background-color: #f0f0f0;'>{video.id}</div>"
-            )
+            id_label = widgets.HTML(value=label_html(video.id, is_outlier))
+            id_labels.append(id_label)
 
             checkbox = widgets.Checkbox(description="", indent=False, value=video.id in manual_outliers);
             checkboxes.append(checkbox)
@@ -206,17 +264,16 @@ def show_video_grid_jupyter(video_list, outliers=None, manual_outliers=None, con
                 )
             )
             video_containers.append(video_container)
-            
-            def make_update_function(video, img_widget):
+
+            def make_update_function(i, video, img_widget):
                 def update_frame(change):
                     frame_idx = change['new']
                     # Handle case where global slider exceeds individual video length
                     if frame_idx < len(video.frames):
-                        frame = video.frames[frame_idx]
-                        img_widget.value = frame
+                        img_widget.value = frame_png(i, frame_idx)
                 return update_frame
-            
-            slider.observe(make_update_function(video, img_widget), names='value')
+
+            slider.observe(make_update_function(i, video, img_widget), names='value')
             
             # Trigger initial display
             slider.value = 0
@@ -275,8 +332,7 @@ def show_video_grid_jupyter(video_list, outliers=None, manual_outliers=None, con
         # Update border styles for all video containers
         for i, video in enumerate(video_list):
             if i < len(video_containers):
-                is_outlier = video.id in outliers
-                video_containers[i].layout.border = get_border_style(video.id, is_outlier)
+                set_outlier_style(i, video.id in outliers)
                 is_manual_outlier = video.id in manual_outliers
                 checkboxes[i].value = is_manual_outlier
         
@@ -304,7 +360,7 @@ def show_video_grid_jupyter(video_list, outliers=None, manual_outliers=None, con
     # Connect global slider to individual sliders
     global_slider.observe(sync_all_to_global, names='value')
     
-    def update_checkbox(checkbox, video_id, video):
+    def update_checkbox(checkbox, video_id, i):
         nonlocal manual_outliers, outliers
         checkbox = checkbox['owner']
         if checkbox.value:
@@ -313,13 +369,13 @@ def show_video_grid_jupyter(video_list, outliers=None, manual_outliers=None, con
         else:
             manual_outliers.discard(video_id)
             outliers.discard(video_id)
-        video.layout.border = get_border_style(video_id, checkbox.value)
+        set_outlier_style(i, checkbox.value)
 
     
     # Connect buttons
     show_outliers_checkbox.observe(lambda c: update_grid_layout(), names='value')
-    for checkbox, video, vid_player in zip(checkboxes, video_list, video_containers):
-        checkbox.observe(lambda c, video_id=video.id, vid_player=vid_player: update_checkbox(c, video_id, vid_player), names='value')
+    for i, (checkbox, video) in enumerate(zip(checkboxes, video_list)):
+        checkbox.observe(lambda c, video_id=video.id, i=i: update_checkbox(c, video_id, i), names='value')
     
     # Initial grid layout
     update_grid_layout()
