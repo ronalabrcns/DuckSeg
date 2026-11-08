@@ -114,10 +114,3 @@ The interactive tools (ROI editor, review grid) are Jupyter widgets. In
 classic Jupyter run ``%matplotlib widget`` before the ROI editor; this
 needs the ``ipympl`` package.
 
-Building this documentation
-===========================
-
-.. code-block:: bash
-
-   pip install -e ".[docs]"
-   sphinx-build -W -b html docs docs/_build/html
