@@ -36,6 +36,12 @@ Column                    Content
 These are the values behind the ``Diff`` and ``Ratio`` plots, computed
 with the ``range_modifier`` you pass.
 
+``inf`` or an empty cell means the score is undefined at that frame, for
+example when the band misses the nucleus or there is no reference area left
+(``normal`` is 0). The row is kept in the file. The averaged curves and the
+``n`` in their legends leave such cells out, so do the same in your own
+statistics.
+
 Baseline-corrected curves
 =========================
 

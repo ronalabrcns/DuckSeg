@@ -1309,9 +1309,24 @@ class CellVideo:
             diff = (range[1] - range[0])*(modifier-1)/2
             res.append((range[0]-diff, range[1]+diff))
         return res
+    @staticmethod
+    def _band_rows(rel_range, n_rows):
+        """
+        Clamp a crop-relative ``(start, end)`` row range to ``[0, n_rows]``.
+
+        Returns ``(start, stop)`` so that ``frame[start:stop]`` is the scored
+        band. The band is empty (``stop == start``) when it lies outside the
+        crop. Shared by :meth:`calculate_brightness` and
+        :meth:`video_with_ranges` so the review grid shows exactly the rows
+        that are scored.
+        """
+        start = max(0, int(rel_range[0]))  # never count rows from the bottom
+        stop = max(start, min(n_rows, int(rel_range[1])))
+        return start, stop
+
     def video_with_ranges(self, range_modifier=1):
         """
-        Return copies of every frame with the laser ROI row range blacked out.
+        Return copies of every frame with the edges of the laser ROI band marked.
 
         Visualization helper for confirming the ROI range used in scoring
         lines up with the visible laser damage; see :meth:`play_video_with_ranges`.
@@ -1324,14 +1339,18 @@ class CellVideo:
         Returns
         -------
         list of numpy.ndarray
-            Frame copies with rows inside the (expanded) ROI range set to 0.
+            Frame copies with the first and last row of the scored (expanded)
+            ROI band set to 0. Nothing is drawn if the band lies outside the
+            nucleus crop.
         """
         ranges = self.expanded_ranges(range_modifier)
         copied_frames = [frame.copy() for frame in self.frames]
         for range in ranges:
             range = self.boxes[0].range_to_relative(range)
             for frame in copied_frames:
-                frame[[max([int(range[0]), 0]),min([int(range[1]), frame.shape[0]-1])],:] = 0
+                start, stop = self._band_rows(range, frame.shape[0])
+                if stop > start:
+                    frame[[start, stop - 1], :] = 0
         return copied_frames
 
     def play_video_with_ranges(self, range_modifier=1):
@@ -1382,11 +1401,16 @@ class CellVideo:
             pass
             #print(f"Multiple ranges {ranges}")
         range = self.boxes[0].range_to_relative(ranges[0])
-        start, end = (int(range[0]), int(range[1]))
         brighnesses = []
         for mask, frame in zip(self.masks, self.frames):
-            lasered = np.sum(frame[start:end,:]) / np.sum(mask[start:end,:])
-            normal = (np.sum(frame[:start,:]) + np.sum(frame[end:,:])) / (np.sum(mask[:start,:]) + np.sum(mask[end:,:]))
+            start, stop = self._band_rows(range, frame.shape[0])
+            n_roi = mask[start:stop].sum()
+            n_ref = mask[:start].sum() + mask[stop:].sum()
+            if n_roi == 0 or n_ref == 0:  # band misses the nucleus, or covers all of it
+                brighnesses.append((np.nan, np.nan))
+                continue
+            lasered = frame[start:stop].sum() / n_roi
+            normal = (frame[:start].sum() + frame[stop:].sum()) / n_ref
             brighnesses.append((normal, lasered))
         return np.array(brighnesses)
     def plot_brightness(self, range_modifier=1):
@@ -1774,6 +1798,12 @@ def calc_brightness_score(batch: ExperimentBatch, score_type: ScoreType = ScoreT
             print_progress=print_progress,
             baseline_correct=baseline_correct,
         )
+def _report_nan_cells(scores):
+    """Print how many cells have NaN in any frame (band missed or covered the nucleus)."""
+    n_nan = sum(1 for sc in scores if np.any(np.isnan(sc)))
+    if n_nan:
+        print(f"{n_nan} of {len(scores)} cells returned NaN in at least one frame (scored band misses or covers the whole nucleus) and are excluded from means.")
+
 def calculate_brightness_score_for_experiments(experiments: list[Experiment], score_type: ScoreType = ScoreType.Ratio, range_modifier=4, cell_filter=lambda x: True, print_progress=False, baseline_correct=False):
     """
     Compute per-cell brightness scores for an explicit list of experiments.
@@ -1819,6 +1849,7 @@ def calculate_brightness_score_for_experiments(experiments: list[Experiment], sc
                 continue
             diffs.append(cell_video.calculate_brightness_score(score_type, range_modifier=range_modifier, baseline_correct=baseline_correct))
         all_diffs.append(diffs)
+    _report_nan_cells([d for diffs in all_diffs for d in diffs])
     return all_diffs
 
 def calculate_brightness_score_for_videos(videos: list[CellVideo], score_type: ScoreType = ScoreType.Ratio, range_modifier=4, cell_filter=lambda x: True, print_progress=False, baseline_correct=False):
@@ -1862,14 +1893,16 @@ def calculate_brightness_score_for_videos(videos: list[CellVideo], score_type: S
         if cell_filter(vid):
             vid_ids.append(vid.id)
             diffs.append(vid.calculate_brightness_score(score_type, range_modifier=range_modifier, baseline_correct=baseline_correct))
+    _report_nan_cells(diffs)
     return vid_ids, diffs
 
 def score_avg(diffb):
     """
     Compute the mean and standard error of a collection of score time series.
 
-    NaN-containing series (e.g. from a division by zero when a mask has no
-    pixels on one side of the ROI) are dropped before averaging.
+    Series containing NaN or inf (e.g. from a division by zero when a mask
+    has no pixels on one side of the ROI) are dropped before averaging, and
+    the number of dropped cells is printed.
 
     Parameters
     ----------
@@ -1881,22 +1914,25 @@ def score_avg(diffb):
     -------
     tuple of (numpy.ndarray, numpy.ndarray)
         The per-timepoint mean and standard error across series (NaN
-        series excluded).
+        or inf series excluded).
 
     Raises
     ------
     ValueError
-        If every series is NaN-only, or series have inconsistent lengths
+        If every series contains NaN or inf, or series have inconsistent lengths
         (raised by :func:`numpy.vstack`).
     """
     for diffa in diffb:
         try:
-            np.any(np.isnan(diffa))
+            np.any(np.isfinite(diffa))
         except:
             print(f"Diffa {diffa}")
             print(f"Diffb {diffb}")
             raise
-    valid = [diffa for diffa in diffb if not np.any(np.isnan(diffa))]
+    valid = [diffa for diffa in diffb if np.all(np.isfinite(diffa))]
+    dropped = len(diffb) - len(valid)
+    if dropped:
+        print(f"{dropped} of {len(diffb)} cells left out of the mean (NaN or inf in their score)")
     if not valid:
         raise ValueError("No cells left to plot: every cell was filtered out or has NaN scores "
                          "(check cell_filter, the ROI position and range_modifier).")
@@ -1950,7 +1986,7 @@ def plot_score_avg(diffs, show = True, color=DEFAULT_COLORS[0], label=None, save
         Axis labels and figure title.
     """
     mean, sem = score_avg(diffs)
-    n = sum(1 for d in diffs if not np.any(np.isnan(d)))
+    n = sum(1 for d in diffs if np.all(np.isfinite(d)))
     x = range(len(mean))
     ax = plt.gca()
     ax.plot(x, mean, label=f'{label} (n={n})' if label is not None else f'n={n}', color=color, linewidth=2)
@@ -2199,7 +2235,7 @@ def plotly_time_series_distribution_3d(
     """
 
     data = np.array(list_of_series)
-    data = data[~np.isnan(data).any(axis=1)]  # Remove NaN-containing series
+    data = data[np.isfinite(data).all(axis=1)]  # Remove series containing NaN or inf
 
     if data.size == 0:
         raise ValueError("No valid time series to plot after removing NaN values.")
@@ -2239,7 +2275,7 @@ def plotly_time_series_distribution_3d(
     fig = go.Figure(data=[surface], layout=layout)
     fig.show()
 
-def plot_all_scores(diffs, outliers=None, max_per_fig = 40, sort_by=lambda y: -1000000 if np.any(np.isnan(y)) else np.mean(y)):
+def plot_all_scores(diffs, outliers=None, max_per_fig = 40, sort_by=lambda y: -1000000 if not np.all(np.isfinite(y)) else np.mean(y)):
     """
     Plot every per-cell score series from a nested per-experiment score list.
 
@@ -2260,7 +2296,7 @@ def plot_all_scores(diffs, outliers=None, max_per_fig = 40, sort_by=lambda y: -1
     flattened = [diff for exp_diff in diffs for diff in exp_diff]
     return plot_sorted_3d_lines(flattened, max_per_fig=max_per_fig)
 
-def plot_all_vid_scores(scores, ids, outliers=None, max_per_fig = 40, sort_by=lambda y: -1000000 if np.any(np.isnan(y)) else np.mean(y)):
+def plot_all_vid_scores(scores, ids, outliers=None, max_per_fig = 40, sort_by=lambda y: -1000000 if not np.all(np.isfinite(y)) else np.mean(y)):
     """
     Plot every per-cell score series, labeled by cell video ID.
 
@@ -2288,7 +2324,7 @@ def plot_all_vid_scores(scores, ids, outliers=None, max_per_fig = 40, sort_by=la
     scores = scores[:]
     return plot_sorted_3d_lines(scores, max_per_fig=max_per_fig, sort_by=sort_by, ids=ids)
 
-def plot_sorted_3d_lines(lines, max_per_fig=None, sort_by=lambda y: -1000000 if np.any(np.isnan(y)) else np.mean(y), ids = None):
+def plot_sorted_3d_lines(lines, max_per_fig=None, sort_by=lambda y: -1000000 if not np.all(np.isfinite(y)) else np.mean(y), ids = None):
     """
     Plot 1-D lines (Y only) in 3-D, sorted by a key, batched across figures.
 
