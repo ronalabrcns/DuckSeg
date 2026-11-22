@@ -110,6 +110,28 @@ Local installation
 
       python -m jupyter lab
 
+CellSAM version and reproducibility
+===================================
+
+DuckSeg results depend on the CellSAM model that segments the nuclei. The
+analyses in the DuckSeg paper used the ``cellsam_general`` weights v1.2 with
+the CellSAM commit pinned above. A newer CellSAM release, or new model
+weights, can outline nuclei slightly differently, so the set of tracked and
+retained cells, and therefore the *n* per condition and the exact curves,
+may change even with identical DuckSeg settings. The qualitative
+recruitment result should not depend on this, but to reproduce numbers
+exactly:
+
+- install CellSAM from the pinned commit,
+- note the DuckSeg version or Git commit you used, and
+- keep the transforms, ``range_modifier``, filter thresholds and manual
+  exclusions together with your exported CSV files.
+
+Fixes in DuckSeg itself can also change *n*: for example, since November
+2026 the scored band is clamped to the nucleus crop, so cells that were
+previously dropped when the widened band reached above the nucleus are now
+scored.
+
 The interactive tools (ROI editor, review grid) are Jupyter widgets. In
 classic Jupyter run ``%matplotlib widget`` before the ROI editor; this
 needs the ``ipympl`` package.

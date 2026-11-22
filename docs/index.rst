@@ -126,7 +126,8 @@ Installation
 ============
 
 DuckSeg targets Python 3.10+ and needs `CellSAM
-<https://github.com/vanvalenlab/cellSAM>`_ with a DeepCell access token.
+<https://github.com/vanvalenlab/cellSAM>`_. Its model weights are downloaded
+from Hugging Face once you have accepted their license (see :doc:`installation`).
 For a local installation:
 
 .. code-block:: bash
@@ -134,11 +135,12 @@ For a local installation:
     git clone https://github.com/ronalabrcns/DuckSeg.git
     cd DuckSeg
     pip install -e .
-    pip install git+https://github.com/vanvalenlab/cellSAM.git
+    pip install git+https://github.com/vanvalenlab/cellSAM.git@362a8e521bcd7313d5cb280bcd4cfc12977c1e9f
+    hf auth login
 
 No local GPU? Use the `Google Colab notebook
 <https://colab.research.google.com/github/ronalabrcns/DuckSeg/blob/main/notebooks/DuckSeg_Example.ipynb>`_.
-See :doc:`installation` for all details, including the access token.
+See :doc:`installation` for all details, including the Hugging Face license and token.
 
 Quickstart
 ==========
@@ -167,7 +169,7 @@ notebook (see :doc:`workflow` for the full walkthrough):
                           cell_filter=cell_filter, baseline_correct=True,
                           save_path="recruitment.png")
     export_cell_videos([v for v in vids if cell_filter(v)], "brightness_scores.csv",
-                       range_modifier=4)
+                       range_modifier=4, baseline_correct=True)   # same settings as the plot
 
 Data expected on disk, per experiment, inside a batch directory
 (details in :doc:`guides/data_preparation`)::

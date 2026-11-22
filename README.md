@@ -99,7 +99,7 @@ plot_brightness_score(batch, score_type=ScoreType.Ratio, range_modifier=4,
                       cell_filter=cell_filter, baseline_correct=True,
                       save_path="recruitment.png")
 export_cell_videos([v for v in vids if cell_filter(v)], "brightness_scores.csv",
-                   range_modifier=4)
+                   range_modifier=4, baseline_correct=True)   # same settings as the plot
 ```
 
 <img width="450" alt="Example recruitment curve (mean ± SEM)" src="https://github.com/user-attachments/assets/a091b8a0-e625-424c-b50e-5909a60b3992" />

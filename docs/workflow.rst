@@ -142,10 +142,14 @@ Key API:
 ===================
 
 Per-cell, per-frame brightness values can be exported to CSV for
-statistics or supplementary data. ::
+statistics or supplementary data. Pass the same ``range_modifier`` and
+``baseline_correct`` as for the plots, otherwise the file holds raw scores
+while the figure shows baseline-corrected ones. ::
 
     from DuckSeg.video_exporter import export_cell_videos
-    export_cell_videos(vids, "output/brightness_scores.csv", range_modifier=range_modifier)
+    kept = [v for v in vids if cell_filter(v)]
+    export_cell_videos(kept, "output/brightness_scores.csv",
+                       range_modifier=range_modifier, baseline_correct=True)
 
 Key API:
 

@@ -57,8 +57,12 @@ same ``range_modifier`` as later in the plots.
    update = show_video_grid_jupyter(vids2[:30], manual_outliers=manual_outliers)
    update(outliers, extra_manual_outliers)      # mark the automatic outliers
 
-Tick the checkbox of a cell to exclude it. Cells already flagged get a red
-border and can be hidden with *Show outliers*. For large batches show the
+Tick the checkbox of a cell to exclude it. Excluded cells, whether flagged
+by a filter or ticked by hand, get a red frame drawn into the video and a
+red ID label ending in *excluded* (the frame is part of the image, so it
+also shows in Google Colab). Cells removed by a filter keep an empty
+checkbox; cells you ticked keep the tick. *Show outliers* hides or shows
+all excluded cells. For large batches show the
 cells in chunks (the example notebook uses 30 per grid) and collect one
 ``update`` function per grid.
 
