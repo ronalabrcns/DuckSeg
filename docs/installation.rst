@@ -54,6 +54,13 @@ under the name ``HF_TOKEN`` and enable notebook access for it. The
 notebook downloads the model in the *Download the CellSAM model* cell and
 tells you there if the license has not been accepted yet.
 
+.. figure:: /_static/screenshots/google_colab_secrets.png
+   :alt: Colab Secrets panel with an HF_TOKEN entry and notebook access switched on
+   :width: 420px
+   :align: center
+
+   The Colab *Secrets* panel (key icon on the left): name ``HF_TOKEN``, your token as the value, notebook access on.
+
 Local installation
 ==================
 

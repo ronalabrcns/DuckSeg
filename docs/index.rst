@@ -112,6 +112,15 @@ See :doc:`workflow` for a full stage-by-stage walkthrough of the
 pipeline, matching the example notebook, with links into the API
 reference for every function and class involved. In brief:
 
+.. figure:: /_static/screenshots/workflow.png
+   :alt: DuckSeg pipeline: input, segmentation and tracking, quality control, quantification, output
+   :width: 600px
+   :align: center
+
+   The DuckSeg pipeline. Blue: automated steps; orange: interactive review; dashed: optional steps.
+
+The same stages, by module:
+
 .. code-block:: text
 
     ExperimentBatch (load videos + ROI masks)
