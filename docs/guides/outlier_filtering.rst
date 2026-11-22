@@ -57,10 +57,20 @@ same ``range_modifier`` as later in the plots.
    update = show_video_grid_jupyter(vids2[:30], manual_outliers=manual_outliers)
    update(outliers, extra_manual_outliers)      # mark the automatic outliers
 
-Tick the checkbox of a cell to exclude it. Cells already flagged get a red
-border and can be hidden with *Show outliers*. For large batches show the
+Tick the checkbox of a cell to exclude it. Excluded cells, whether flagged
+by a filter or ticked by hand, get a red frame drawn into the video and a
+red ID label ending in *excluded* (the frame is part of the image, so it
+also shows in Google Colab). Cells removed by a filter keep an empty
+checkbox; cells you ticked keep the tick. *Show outliers* hides or shows
+all excluded cells. For large batches show the
 cells in chunks (the example notebook uses 30 per grid) and collect one
 ``update`` function per grid.
+
+.. figure:: /_static/screenshots/review_grid_example.png
+   :alt: Review grid of tracked cells; excluded cells have a red frame and an 'excluded' label
+   :align: center
+
+   Part of a review grid. Cells with a red frame are excluded; a tick means the cell was excluded by hand, an empty checkbox that a filter removed it.
 
 Cell ids have the form ``<experiment name>_<number>`` and are shown above
 each cell.
@@ -89,6 +99,13 @@ mean, which makes unusual traces easy to spot:
    ids, scores = calculate_brightness_score_for_videos(
        vids, score_type=ScoreType.Diff, range_modifier=range_modifier, cell_filter=cell_filter)
    plot_all_vid_scores(scores, ids)
+
+.. figure:: /_static/screenshots/3d_viewer.png
+   :alt: Interactive 3D plot of all cell score traces, stacked by their mean
+   :width: 600px
+   :align: center
+
+   The 3D view: one line per cell, sorted by mean score. Rotate and zoom it, hover over a line to see the cell id.
 
 Write your own filter
 =====================

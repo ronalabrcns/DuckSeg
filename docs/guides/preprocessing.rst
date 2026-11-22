@@ -26,6 +26,13 @@ few frames.
        show_after_transform=[0, 2],  # also show intermediate results
    )
 
+.. figure:: /_static/screenshots/preprocess_review.png
+   :alt: Preprocessed frames (top) and the CellSAM masks found in them (bottom)
+   :width: 420px
+   :align: center
+
+   Output for one experiment and two frames: the frames after the transforms (top) and the nuclei CellSAM finds in them, one colour per nucleus (bottom). Most nuclei should come out as separate, whole objects.
+
 Parameters
 ==========
 

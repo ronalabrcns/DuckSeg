@@ -9,6 +9,13 @@ Each stage links to the API reference entry for the functions and classes
 involved, so this page doubles as a map from "what the notebook does" to
 "where that lives in the code."
 
+.. figure:: /_static/screenshots/workflow.png
+   :alt: DuckSeg pipeline: input, segmentation and tracking, quality control, quantification, output
+   :width: 600px
+   :align: center
+
+   Overview of the pipeline. Blue: automated steps; orange: interactive review; dashed: optional steps.
+
 .. contents::
    :local:
    :depth: 1
@@ -42,6 +49,12 @@ ROI file and picked up transparently by every later stage. ::
     from DuckSeg.roi_editor import show_roi_editors
     show_roi_editors(batch.experiments())
 
+.. figure:: /_static/screenshots/ROI_range_editor.png
+   :alt: ROI editor: video frame with the laser stripes drawn as white bands and move buttons
+   :align: center
+
+   The ROI editor: the detected stripes are drawn as white bands; the buttons on the right move each stripe, *▲ all / ▼ all* move all of them. See :doc:`guides/roi_editor`.
+
 Key API:
 
 - :func:`DuckSeg.roi_editor.show_roi_editor`
@@ -61,6 +74,13 @@ chain (contrast, brightness, thresholding). ::
     generate_masks_using_filters_and_transforms(
         batch, experiment_filter, frame_filter, transforms, show_after_transform
     )
+
+.. figure:: /_static/screenshots/preprocess_review.png
+   :alt: Preprocessed frames (top) and the CellSAM masks found in them (bottom)
+   :width: 420px
+   :align: center
+
+   Preview of one experiment: the frames after the transforms (top) and the nuclei CellSAM segments in them (bottom). See :doc:`guides/preprocessing`.
 
 Key API:
 
@@ -107,6 +127,12 @@ combines automated filters with a manual visual review grid: ::
     filters = [area_between(10, 5000)]
     outliers = outlier_vids(vids, extra_manual_outliers, filters)
 
+.. figure:: /_static/screenshots/review_grid_example.png
+   :alt: Review grid of tracked cells; excluded cells have a red frame and an 'excluded' label
+   :align: center
+
+   The review grid. Excluded cells, flagged by a filter or ticked by hand, get a red frame and an *excluded* label. See :doc:`guides/outlier_filtering`.
+
 Key API:
 
 - :mod:`DuckSeg.outlier_filters` (:func:`~DuckSeg.outlier_filters.outlier_vids`,
@@ -129,6 +155,17 @@ several batches. ::
     plot_brightness_score(batch, score_type=ScoreType.Ratio,
                            range_modifier=range_modifier, cell_filter=cell_filter)
 
+The two score types of the same cells (mean ± SEM, baseline-corrected),
+``ScoreType.Ratio`` on the left and ``ScoreType.Diff`` on the right:
+
+.. list-table::
+   :class: borderless
+
+   * - .. image:: /_static/screenshots/example_ratio.png
+          :alt: Mean brightness ratio over time, baseline-corrected, with SEM band
+     - .. image:: /_static/screenshots/example_diff.png
+          :alt: Mean brightness difference over time, baseline-corrected, with SEM band
+
 Key API:
 
 - :meth:`DuckSeg.experiment_evaluator.CellVideo.calculate_brightness` and
@@ -142,10 +179,14 @@ Key API:
 ===================
 
 Per-cell, per-frame brightness values can be exported to CSV for
-statistics or supplementary data. ::
+statistics or supplementary data. Pass the same ``range_modifier`` and
+``baseline_correct`` as for the plots, otherwise the file holds raw scores
+while the figure shows baseline-corrected ones. ::
 
     from DuckSeg.video_exporter import export_cell_videos
-    export_cell_videos(vids, "output/brightness_scores.csv", range_modifier=range_modifier)
+    kept = [v for v in vids if cell_filter(v)]
+    export_cell_videos(kept, "output/brightness_scores.csv",
+                       range_modifier=range_modifier, baseline_correct=True)
 
 Key API:
 

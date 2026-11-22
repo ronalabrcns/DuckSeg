@@ -54,6 +54,13 @@ under the name ``HF_TOKEN`` and enable notebook access for it. The
 notebook downloads the model in the *Download the CellSAM model* cell and
 tells you there if the license has not been accepted yet.
 
+.. figure:: /_static/screenshots/google_colab_secrets.png
+   :alt: Colab Secrets panel with an HF_TOKEN entry and notebook access switched on
+   :width: 420px
+   :align: center
+
+   The Colab *Secrets* panel (key icon on the left): name ``HF_TOKEN``, your token as the value, notebook access on.
+
 Local installation
 ==================
 
@@ -109,6 +116,28 @@ Local installation
    .. code-block:: bash
 
       python -m jupyter lab
+
+CellSAM version and reproducibility
+===================================
+
+DuckSeg results depend on the CellSAM model that segments the nuclei. The
+analyses in the DuckSeg paper used the ``cellsam_general`` weights v1.2 with
+the CellSAM commit pinned above. A newer CellSAM release, or new model
+weights, can outline nuclei slightly differently, so the set of tracked and
+retained cells, and therefore the *n* per condition and the exact curves,
+may change even with identical DuckSeg settings. The qualitative
+recruitment result should not depend on this, but to reproduce numbers
+exactly:
+
+- install CellSAM from the pinned commit,
+- note the DuckSeg version or Git commit you used, and
+- keep the transforms, ``range_modifier``, filter thresholds and manual
+  exclusions together with your exported CSV files.
+
+Fixes in DuckSeg itself can also change *n*: for example, since November
+2026 the scored band is clamped to the nucleus crop, so cells that were
+previously dropped when the widened band reached above the nucleus are now
+scored.
 
 The interactive tools (ROI editor, review grid) are Jupyter widgets. In
 classic Jupyter run ``%matplotlib widget`` before the ROI editor; this

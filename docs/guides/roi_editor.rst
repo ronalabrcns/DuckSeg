@@ -20,6 +20,12 @@ output.enable_custom_widget_manager()`` first.
 One editor is shown per experiment: the video with a slider and play
 button, and the detected stripe(s) as a translucent white band.
 
+.. figure:: /_static/screenshots/ROI_range_editor.png
+   :alt: ROI editor: video frame with the laser stripes drawn as white bands and move buttons
+   :align: center
+
+   One ROI editor. Each pair of ▲ / ▼ buttons on the right belongs to one stripe edge, from top to bottom.
+
 * The **▲ / ▼** buttons next to a stripe move that stripe by one pixel.
 * **▲ all / ▼ all** move all stripes together.
 * **Reset** restores the original mask and deletes the corrected file.

@@ -27,6 +27,21 @@ reproducible one.
 5. **Review** the cells in a video grid and drop failures, by hand or with area filters.
 6. **Plot and export** the recruitment curves (mean ± SEM) and per-cell CSV data.
 
+<details>
+<summary>Pipeline diagram</summary>
+
+<img width="600" alt="DuckSeg pipeline: input, segmentation and tracking, quality control, quantification, output" src="docs/_static/screenshots/workflow.png" />
+
+</details>
+
+| Correct the stripe | Tune the preprocessing |
+|---|---|
+| <img width="420" alt="ROI editor with the laser stripes as white bands" src="docs/_static/screenshots/ROI_range_editor.png" /> | <img width="300" alt="Preprocessed frames and the CellSAM masks found in them" src="docs/_static/screenshots/preprocess_review.png" /> |
+
+**Review the cells:** excluded cells get a red frame.
+
+<img alt="Review grid of tracked cells; excluded cells have a red frame" src="docs/_static/screenshots/review_grid_example.png" />
+
 ## Get started
 
 ### Google Colab (no installation)
@@ -39,6 +54,8 @@ reproducible one.
 3. Open [`DuckSeg_Example.ipynb`](https://colab.research.google.com/github/ronalabrcns/DuckSeg/blob/main/notebooks/DuckSeg_Example.ipynb),
    choose a GPU runtime, and add the token to the Colab *Secrets* panel as
    `HF_TOKEN` (with notebook access on).
+
+   <img width="400" alt="Colab Secrets panel with HF_TOKEN and notebook access on" src="docs/_static/screenshots/google_colab_secrets.png" />
 
 It runs on an example dataset; switch `DATA_SOURCE` to `"drive"` to analyse
 your own videos from Google Drive.
@@ -99,7 +116,7 @@ plot_brightness_score(batch, score_type=ScoreType.Ratio, range_modifier=4,
                       cell_filter=cell_filter, baseline_correct=True,
                       save_path="recruitment.png")
 export_cell_videos([v for v in vids if cell_filter(v)], "brightness_scores.csv",
-                   range_modifier=4)
+                   range_modifier=4, baseline_correct=True)   # same settings as the plot
 ```
 
 <img width="450" alt="Example recruitment curve (mean ± SEM)" src="https://github.com/user-attachments/assets/a091b8a0-e625-424c-b50e-5909a60b3992" />
