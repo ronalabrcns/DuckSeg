@@ -121,6 +121,7 @@ combines automated filters with a manual visual review grid: ::
     from DuckSeg.cell_video_visualizer import normalize_videos_for_display, show_video_grid_jupyter
     from DuckSeg.outlier_filters import area_between, outlier_vids
 
+    range_modifier = 4      # width of the scored band: 4 x the drawn stripe (used again below)
     vids2 = normalize_videos_for_display(vids, range_modifier=range_modifier)
     update_outliers = show_video_grid_jupyter(vids2, manual_outliers=manual_outliers)
 
@@ -153,7 +154,8 @@ several batches. ::
 
     from DuckSeg.experiment_evaluator import ScoreType, plot_brightness_score
     plot_brightness_score(batch, score_type=ScoreType.Ratio,
-                           range_modifier=range_modifier, cell_filter=cell_filter)
+                           range_modifier=range_modifier, cell_filter=cell_filter,
+                           baseline_correct=True)
 
 The two score types of the same cells (mean ± SEM, baseline-corrected),
 ``ScoreType.Ratio`` on the left and ``ScoreType.Diff`` on the right:

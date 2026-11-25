@@ -28,7 +28,7 @@ in the legend.
        b.max_len = n             # same length everywhere
 
    plot_brightness_scores(batches, score_type=ScoreType.Ratio,
-                          range_modifier=5, cell_filter=cell_filter)
+                          range_modifier=4, cell_filter=cell_filter)
 
 Run :func:`~DuckSeg.experiment_evaluator.evaluate_batch` for every batch
 first (:doc:`caching`); the plots read the stored results. The legend
@@ -87,6 +87,6 @@ All the mean-curve plots accept two options:
 
 .. code-block:: python
 
-   plot_brightness_scores(batches, score_type=ScoreType.Ratio, range_modifier=5,
+   plot_brightness_scores(batches, score_type=ScoreType.Ratio, range_modifier=4,
                           cell_filter=cell_filter, baseline_correct=True,
                           save_path="recruitment_ratio.png")
