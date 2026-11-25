@@ -123,6 +123,11 @@ Local installation
 
       python -m jupyter lab
 
+   For your own data, open ``notebooks/DuckSeg_Local.ipynb``: set
+   ``DATA_DIR`` to a folder with your videos and their ``*_ROI.tif`` masks
+   (one condition per folder, see :doc:`guides/data_preparation`) and run all
+   cells. Plots and the CSV are saved to ``duckseg_output`` inside that folder.
+
 CellSAM version and reproducibility
 ===================================
 

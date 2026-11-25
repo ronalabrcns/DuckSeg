@@ -60,6 +60,10 @@ hf auth login      # paste your Hugging Face token (license accepted, see above)
 python -m jupyter lab
 ```
 
+Then open [`notebooks/DuckSeg_Local.ipynb`](notebooks/DuckSeg_Local.ipynb), set
+`DATA_DIR` to a folder with your videos and their `*_ROI.tif` masks, and run
+all cells. Plots and the CSV are saved to a `duckseg_output` folder inside it.
+
 The CellSAM weights are downloaded from Hugging Face on the first run and
 cached in `~/.deepcell/models`. Instead of `hf auth login` you can set the
 token as the `HF_TOKEN` environment variable (see the
