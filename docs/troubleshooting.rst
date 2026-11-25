@@ -7,7 +7,14 @@ Troubleshooting
     account your token belongs to. Open
     `vanvalenlab/cellsam <https://huggingface.co/vanvalenlab/cellsam>`_
     while logged in with that account, click *I agree to the license
-    terms*, and run the cell again (:doc:`installation`).
+    terms*, and run the cell again (:doc:`installation`). A *fine-grained*
+    token additionally needs *Read access to contents of all public gated
+    repos you can access*; a classic *Read* token works as is.
+
+*Tick 'i_accept_the_cellsam_license' above* (form notebook)
+    Step 2 of ``DuckSeg_Example_Form.ipynb`` only runs after you tick the
+    license checkbox. Accept the license on Hugging Face as well (see
+    above), tick the box and run step 2 again.
 
 *No CellSAM weights found and no token to download them*
     ``HF_TOKEN`` is not set in the environment of the notebook kernel. In

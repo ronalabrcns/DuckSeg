@@ -145,7 +145,7 @@ For a local installation:
     cd DuckSeg
     pip install -e .
     pip install git+https://github.com/vanvalenlab/cellSAM.git@362a8e521bcd7313d5cb280bcd4cfc12977c1e9f
-    hf auth login
+    hf auth login     # or set HF_TOKEN, see installation
 
 No local GPU? Use the `Google Colab notebook
 <https://colab.research.google.com/github/ronalabrcns/DuckSeg/blob/main/notebooks/DuckSeg_Example.ipynb>`_.

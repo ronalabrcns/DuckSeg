@@ -26,7 +26,9 @@ once first:
    and click *I agree to the license terms*.
 2. Create a *Read* token at
    `huggingface.co/settings/tokens <https://huggingface.co/settings/tokens>`_.
-   You provide it as ``HF_TOKEN`` (see below).
+   A *fine-grained* token also works if *Read access to contents of all
+   public gated repos you can access* is switched on. You provide the
+   token as ``HF_TOKEN`` (see below).
 
 A DeepCell access token from `users.deepcell.org <https://users.deepcell.org/>`_,
 set as ``DEEPCELL_ACCESS_TOKEN``, still works instead of the Hugging Face
@@ -50,9 +52,12 @@ sliders) with the code hidden.
 
 Accept the CellSAM license and create a Hugging Face token (see
 `CellSAM model license`_). Store the token in the Colab *Secrets* panel
-under the name ``HF_TOKEN`` and enable notebook access for it. The
-notebook downloads the model in the *Download the CellSAM model* cell and
-tells you there if the license has not been accepted yet.
+under the name ``HF_TOKEN`` and enable notebook access for it. The code
+notebook downloads the model in the *Download the CellSAM model* cell. In
+the form notebook, tick ``i_accept_the_cellsam_license`` in step 2
+(*Accept the license and load the CellSAM model*) before running it. Both
+notebooks tell you there if the token is missing or the license has not
+been accepted yet.
 
 .. figure:: /_static/screenshots/google_colab_secrets.png
    :alt: Colab Secrets panel with an HF_TOKEN entry and notebook access switched on
@@ -106,6 +111,7 @@ Local installation
 
       export HF_TOKEN="<your token>"     # Linux, macOS
       set HF_TOKEN=<your token>          # Windows (cmd)
+      $env:HF_TOKEN="<your token>"       # Windows (PowerShell)
 
    The weights are downloaded on the first segmentation (or explicitly with
    :func:`DuckSeg.model_loader.load_cellsam_model`). After that, no token is

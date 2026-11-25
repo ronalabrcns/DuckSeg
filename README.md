@@ -35,7 +35,8 @@ reproducible one.
    [huggingface.co](https://huggingface.co), open
    [vanvalenlab/cellsam](https://huggingface.co/vanvalenlab/cellsam) and click
    *I agree to the license terms* (see [License](#license)).
-2. Create a *Read* token at [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens).
+2. Create a *Read* token at [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens)
+   (a *fine-grained* token also works if *Read access to contents of all public gated repos you can access* is switched on).
 3. Open [`DuckSeg_Example.ipynb`](https://colab.research.google.com/github/ronalabrcns/DuckSeg/blob/main/notebooks/DuckSeg_Example.ipynb),
    choose a GPU runtime, and add the token to the Colab *Secrets* panel as
    `HF_TOKEN` (with notebook access on).
@@ -45,6 +46,8 @@ your own videos from Google Drive.
 
 **Prefer forms to code?** [`DuckSeg_Example_Form.ipynb`](https://colab.research.google.com/github/ronalabrcns/DuckSeg/blob/main/notebooks/DuckSeg_Example_Form.ipynb) runs the same
 pipeline with text fields, checkboxes and sliders, and the code is hidden.
+Add the token to *Secrets* the same way, and tick `i_accept_the_cellsam_license`
+in step 2 before running it.
 
 ### Local installation
 
@@ -58,8 +61,11 @@ python -m jupyter lab
 ```
 
 The CellSAM weights are downloaded from Hugging Face on the first run and
-cached in `~/.deepcell/models`. A DeepCell token (`DEEPCELL_ACCESS_TOKEN`)
-still works instead of the Hugging Face login.
+cached in `~/.deepcell/models`. Instead of `hf auth login` you can set the
+token as the `HF_TOKEN` environment variable (see the
+[installation guide](https://duckseg.readthedocs.io/en/latest/installation.html)).
+A DeepCell token (`DEEPCELL_ACCESS_TOKEN`) still works instead of the
+Hugging Face token.
 
 A CUDA GPU is strongly recommended. `requirements.txt` is a pinned snapshot
 of a working Linux/NVIDIA environment. See the
