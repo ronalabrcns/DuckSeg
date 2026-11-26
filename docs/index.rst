@@ -30,7 +30,7 @@ workflow.
 .. raw:: html
 
    <p>
-     <a href="https://colab.research.google.com/github/ronalabrcns/DuckSeg/blob/main/notebooks/DuckSeg_Example.ipynb">
+     <a href="https://colab.research.google.com/github/ronalabrcns/DuckSeg/blob/main/notebooks/DuckSeg_Example_Form.ipynb">
        <img alt="Open in Colab" src="https://colab.research.google.com/assets/colab-badge.svg">
      </a>
      <a href="https://github.com/ronalabrcns/DuckSeg">
