@@ -96,7 +96,7 @@ More in [Prepare your data](https://duckseg.readthedocs.io/en/latest/guides/data
 from DuckSeg.experiment_loader import ExperimentBatch
 from DuckSeg.image_transforms import convert_to_u8, set_brightness, threshold_image
 from DuckSeg.experiment_evaluator import evaluate_batch, plot_brightness_score, ScoreType
-from DuckSeg.outlier_filters import area_between, outlier_vids
+from DuckSeg.outlier_filters import area_between, max_area_change_between_frames, outlier_vids
 from DuckSeg.video_exporter import export_cell_videos
 
 batch = ExperimentBatch("MSH2", "/path/to/videos")
@@ -105,14 +105,15 @@ batch.max_len = min(e.frame_count() for e in batch.experiments())   # same lengt
 transforms = [convert_to_u8, set_brightness(20), threshold_image(20)]
 vids = evaluate_batch(batch, transforms=transforms)    # segment + track (slow, cached)
 
-outliers = outlier_vids(vids, manual=set(), filters=[area_between(10, 5000)])
+outliers = outlier_vids(vids, manual=set(), filters=[area_between(10, 7500),
+                                                     max_area_change_between_frames(0.2)])
 cell_filter = lambda vid: vid.id not in outliers
 
-plot_brightness_score(batch, score_type=ScoreType.Ratio, range_modifier=4,
+plot_brightness_score(batch, score_type=ScoreType.Ratio, range_modifier=5,
                       cell_filter=cell_filter, baseline_correct=True,
                       save_path="recruitment.png")
 export_cell_videos([v for v in vids if cell_filter(v)], "brightness_scores.csv",
-                   range_modifier=4, baseline_correct=True)   # same settings as the plot
+                   range_modifier=5, baseline_correct=True)   # same settings as the plot
 ```
 
 | Ratio (`ScoreType.Ratio`) | Difference (`ScoreType.Diff`) |

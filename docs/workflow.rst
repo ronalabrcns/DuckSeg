@@ -119,13 +119,13 @@ Segmentation and tracking occasionally fail for individual cells. DuckSeg
 combines automated filters with a manual visual review grid: ::
 
     from DuckSeg.cell_video_visualizer import normalize_videos_for_display, show_video_grid_jupyter
-    from DuckSeg.outlier_filters import area_between, outlier_vids
+    from DuckSeg.outlier_filters import area_between, max_area_change_between_frames, outlier_vids
 
-    range_modifier = 4      # width of the scored band: 4 x the drawn stripe (used again below)
+    range_modifier = 5      # width of the scored band: 5 x the drawn stripe (used again below)
     vids2 = normalize_videos_for_display(vids, range_modifier=range_modifier)
     update_outliers = show_video_grid_jupyter(vids2, manual_outliers=manual_outliers)
 
-    filters = [area_between(10, 5000)]
+    filters = [area_between(10, 7500), max_area_change_between_frames(0.2)]
     outliers = outlier_vids(vids, extra_manual_outliers, filters)
 
 .. figure:: /_static/screenshots/review_grid_example.png

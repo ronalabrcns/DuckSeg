@@ -33,7 +33,7 @@ the cell should be **kept**. The ready-made filters in
 
    from DuckSeg.outlier_filters import area_between, max_area_change_between_frames, outlier_vids
 
-   filters = [area_between(10, 5000), max_area_change_between_frames(0.2)]
+   filters = [area_between(10, 7500), max_area_change_between_frames(0.2)]
    extra_manual_outliers = {"MSH2_001_7"}       # ids you always want to exclude
    outliers = outlier_vids(vids, extra_manual_outliers, filters)
 
@@ -50,7 +50,7 @@ same ``range_modifier`` as later in the plots.
 
    from DuckSeg.cell_video_visualizer import normalize_videos_for_display, show_video_grid_jupyter
 
-   range_modifier = 4
+   range_modifier = 5
    vids2 = normalize_videos_for_display(vids, range_modifier=range_modifier)
 
    manual_outliers = set()          # filled by the checkboxes
