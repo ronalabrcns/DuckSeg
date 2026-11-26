@@ -8,6 +8,7 @@
 [![Documentation](https://img.shields.io/readthedocs/duckseg)](https://duckseg.readthedocs.io/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](pyproject.toml)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.24546970.svg)](https://doi.org/10.5281/zenodo.24546970)
 
 DuckSeg measures how a fluorescent protein gathers at sites of
 laser-induced DNA damage in live-cell time-lapse videos. It segments every
