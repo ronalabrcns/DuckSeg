@@ -50,7 +50,7 @@ same ``range_modifier`` as later in the plots.
 
    from DuckSeg.cell_video_visualizer import normalize_videos_for_display, show_video_grid_jupyter
 
-   range_modifier = 5
+   range_modifier = 4
    vids2 = normalize_videos_for_display(vids, range_modifier=range_modifier)
 
    manual_outliers = set()          # filled by the checkboxes

@@ -394,7 +394,9 @@ def generate_mask_inner(frame, bounding_boxes=None):
     Lazily loads and caches the CellSAM model in the module-level
     ``cellsam_model`` on first call, with
     :func:`DuckSeg.model_loader.load_cellsam_model`. On a CUDA out-of-memory error, clears
-    the GPU cache and retries once.
+    the GPU cache and retries once. If CellSAM detects no nuclei in the
+    frame, an empty mask and an empty box list are returned (with a
+    warning) instead of raising.
 
     Parameters
     ----------
@@ -409,7 +411,8 @@ def generate_mask_inner(frame, bounding_boxes=None):
     -------
     tuple of (numpy.ndarray, list)
         The labeled segmentation mask and the list of detected bounding
-        boxes (CellSAM ``[y_min, x_min, y_max, x_max]`` format).
+        boxes (CellSAM ``[y_min, x_min, y_max, x_max]`` format). Both are
+        empty (all-zero mask, ``[]``) if no nuclei were detected.
     """
     global cellsam_model
     if cellsam_model is None:
@@ -417,6 +420,12 @@ def generate_mask_inner(frame, bounding_boxes=None):
     try:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         mask, embedding, bounding_boxes = segment_cellular_image(frame, device=device.type, model = cellsam_model, bounding_boxes=bounding_boxes, bbox_threshold=0.7)
+    except (AttributeError, TypeError) as e:
+        # CellSAM (pinned commit) crashes on a None mask when it detects
+        # nothing in the frame; treat that as "no nuclei", re-raise anything else
+        if "NoneType" not in str(e):
+            raise
+        return _no_detections(frame)
     except torch.cuda.OutOfMemoryError:
         """
         torch can run out of memory on the gpu, reset the session and try again
@@ -427,7 +436,14 @@ def generate_mask_inner(frame, bounding_boxes=None):
         #cellsam_model = get_model()
         torch.cuda.empty_cache()
         mask, embedding, bounding_boxes = segment_cellular_image(frame, device=device.type, model = cellsam_model, bounding_boxes=bounding_boxes)
+    if mask is None or bounding_boxes is None or len(bounding_boxes) == 0:
+        return _no_detections(frame)
     return mask, bounding_boxes
+
+def _no_detections(frame):
+    """Empty segmentation result for a frame in which CellSAM found no nuclei."""
+    print("Warning: no nuclei detected in this frame; it is treated as empty.")
+    return np.zeros(np.asarray(frame).shape[:2], dtype=np.int32), []
 
 def generate_mask_transform(frame):
     """
@@ -765,6 +781,10 @@ class ExperimentEvaluator:
             inds = []
             for (boxes, masks) in zip(self.boxes, self.cell_mask_lists):
                 diffs = [float(mask_diff(curr_box, curr_mask, next_box, next_mask)) for next_box, next_mask in zip(boxes, masks)]
+                if not diffs:
+                    # no nuclei detected in this frame: keep the previous one
+                    inds.append(inds[-1])
+                    continue
                 ind = np.argmin(diffs)
                 # if we didn't create a mask for a cell in this frame, use the prvious one
                 if diffs[ind] > np.sum(curr_mask) * 0.6:

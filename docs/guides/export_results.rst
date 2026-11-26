@@ -12,7 +12,8 @@ plotting in other software.
 
    os.makedirs("output", exist_ok=True)
    kept = [vid for vid in vids if cell_filter(vid)]       # drop the outliers
-   export_cell_videos(kept, "output/brightness_scores.csv", range_modifier=range_modifier)
+   export_cell_videos(kept, "output/brightness_scores.csv",
+                      range_modifier=range_modifier, baseline_correct=True)   # same settings as the plots
 
 :func:`~DuckSeg.video_exporter.export_cell_videos` exports exactly the
 cells you pass in. Filter them first, as above, otherwise rejected cells
