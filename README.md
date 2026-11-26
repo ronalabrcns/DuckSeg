@@ -54,8 +54,10 @@ in step 2 before running it.
 ```bash
 git clone https://github.com/ronalabrcns/DuckSeg.git
 cd DuckSeg
+conda create -n duckseg python=3.12
+conda activate duckseg
+pip install -r requirements.txt
 pip install -e .
-pip install git+https://github.com/vanvalenlab/cellSAM.git@362a8e521bcd7313d5cb280bcd4cfc12977c1e9f
 hf auth login      # paste your Hugging Face token (license accepted, see above)
 python -m jupyter lab
 ```
@@ -71,8 +73,8 @@ token as the `HF_TOKEN` environment variable (see the
 A DeepCell token (`DEEPCELL_ACCESS_TOKEN`) still works instead of the
 Hugging Face token.
 
-A CUDA GPU is strongly recommended. `requirements.txt` is a pinned snapshot
-of a working Linux/NVIDIA environment. See the
+A CUDA GPU is strongly recommended. `requirements.txt` installs CellSAM at the
+tested commit and the tested package versions (Python 3.11 or newer). See the
 [installation guide](https://duckseg.readthedocs.io/en/latest/installation.html)
 for details.
 

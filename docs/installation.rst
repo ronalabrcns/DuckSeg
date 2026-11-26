@@ -69,41 +69,43 @@ been accepted yet.
 Local installation
 ==================
 
-1. Clone the repository and create a virtual environment.
+1. Clone the repository and create an environment, with conda:
 
    .. code-block:: bash
 
       git clone https://github.com/ronalabrcns/DuckSeg.git
       cd DuckSeg
-      python -m venv myenv
+      conda create -n duckseg python=3.12
+      conda activate duckseg
 
-   Activate it with ``source myenv/bin/activate`` (Linux, macOS) or
+   or with a virtual environment: ``python -m venv myenv``, then activate it
+   with ``source myenv/bin/activate`` (Linux, macOS) or
    ``myenv\Scripts\activate`` (Windows).
 
-2. Install the requirements.
+2. Install the requirements and DuckSeg.
 
    .. code-block:: bash
 
       python -m pip install -r requirements.txt
+      python -m pip install -e .
 
-   ``requirements.txt`` is a full, pinned snapshot of a Linux/NVIDIA
-   environment (it includes CUDA packages). On other systems, install
-   PyTorch for your platform first and then the package itself, which
-   brings the remaining dependencies:
+   ``requirements.txt`` holds only what DuckSeg needs, pinned to the tested
+   versions, including `CellSAM <https://github.com/vanvalenlab/cellSAM>`_
+   at the tested commit (CellSAM is not on PyPI) and PyTorch. It needs
+   Python 3.11 or newer. For an NVIDIA GPU on Windows, install the CUDA build
+   of PyTorch from `pytorch.org <https://pytorch.org/get-started/locally/>`_
+   first; the default Windows build is CPU-only.
+
+   Without ``requirements.txt`` (for example on Python 3.10), install the
+   package, which brings its dependencies in their latest versions, and
+   CellSAM at the tested commit:
 
    .. code-block:: bash
 
       pip install -e .
-
-3. Install `CellSAM <https://github.com/vanvalenlab/cellSAM>`_. It is not
-   on PyPI and is therefore not part of the package dependencies. DuckSeg
-   is tested with this commit:
-
-   .. code-block:: bash
-
       pip install git+https://github.com/vanvalenlab/cellSAM.git@362a8e521bcd7313d5cb280bcd4cfc12977c1e9f
 
-4. Accept the CellSAM license (see `CellSAM model license`_) and make your
+3. Accept the CellSAM license (see `CellSAM model license`_) and make your
    Hugging Face token available before starting Jupyter, either once with
    ``hf auth login`` or as an environment variable:
 
@@ -117,7 +119,7 @@ Local installation
    :func:`DuckSeg.model_loader.load_cellsam_model`). After that, no token is
    needed on this computer.
 
-5. Start Jupyter and open a notebook from ``notebooks/``.
+4. Start Jupyter and open a notebook from ``notebooks/``.
 
    .. code-block:: bash
 
