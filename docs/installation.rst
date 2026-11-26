@@ -38,17 +38,19 @@ Google Colab (no installation)
 ==============================
 
 Open the example notebook
-`DuckSeg_Example.ipynb <https://colab.research.google.com/github/ronalabrcns/DuckSeg/blob/main/notebooks/DuckSeg_Example.ipynb>`_
-and choose a GPU runtime (*Runtime → Change runtime type*). The first cells
-clone the repository, install CellSAM and restart the kernel (wait for the
-session to reconnect before continuing). By default the notebook downloads
-an example dataset; set ``DATA_SOURCE = "drive"`` and ``DRIVE_DIR`` to
-analyse your own videos from Google Drive.
-
-If you would rather not edit code, open
 `DuckSeg_Example_Form.ipynb <https://colab.research.google.com/github/ronalabrcns/DuckSeg/blob/main/notebooks/DuckSeg_Example_Form.ipynb>`_
-instead: the same pipeline as Colab forms (text fields, checkboxes,
-sliders) with the code hidden.
+and choose a GPU runtime (*Runtime → Change runtime type*). Every step is a
+form (text fields, checkboxes, sliders) with the code hidden: fill in the
+fields and run the steps from top to bottom. By default the notebook
+downloads an example dataset; choose ``drive`` as the data source in step 3
+and set the folder to analyse your own videos from Google Drive.
+
+If you prefer editable code, open
+`DuckSeg_Example.ipynb <https://colab.research.google.com/github/ronalabrcns/DuckSeg/blob/main/notebooks/DuckSeg_Example.ipynb>`_
+instead: the same pipeline as code cells. Its first cells clone the
+repository, install CellSAM and restart the kernel (wait for the session to
+reconnect before continuing); set ``DATA_SOURCE = "drive"`` and
+``DRIVE_DIR`` for your own videos.
 
 Accept the CellSAM license and create a Hugging Face token (see
 `CellSAM model license`_). Store the token in the Colab *Secrets* panel

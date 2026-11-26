@@ -4,7 +4,7 @@
 
 **Deep-learning Utility for Cell masKing and Segmentation**
 
-[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ronalabrcns/DuckSeg/blob/main/notebooks/DuckSeg_Example.ipynb)
+[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ronalabrcns/DuckSeg/blob/main/notebooks/DuckSeg_Example_Form.ipynb)
 [![Documentation](https://img.shields.io/readthedocs/duckseg)](https://duckseg.readthedocs.io/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](pyproject.toml)
@@ -37,17 +37,18 @@ reproducible one.
    *I agree to the license terms* (see [License](#license)).
 2. Create a *Read* token at [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens)
    (a *fine-grained* token also works if *Read access to contents of all public gated repos you can access* is switched on).
-3. Open [`DuckSeg_Example.ipynb`](https://colab.research.google.com/github/ronalabrcns/DuckSeg/blob/main/notebooks/DuckSeg_Example.ipynb),
+3. Open [`DuckSeg_Example_Form.ipynb`](https://colab.research.google.com/github/ronalabrcns/DuckSeg/blob/main/notebooks/DuckSeg_Example_Form.ipynb),
    choose a GPU runtime, and add the token to the Colab *Secrets* panel as
    `HF_TOKEN` (with notebook access on).
+4. Run the steps from top to bottom; tick `i_accept_the_cellsam_license` in
+   step 2.
 
-It runs on an example dataset; switch `DATA_SOURCE` to `"drive"` to analyse
-your own videos from Google Drive.
+Every step is a form (text fields, checkboxes and sliders) with the code
+hidden. It runs on an example dataset; choose `drive` as the data source in
+step 3 to analyse your own videos from Google Drive.
 
-**Prefer forms to code?** [`DuckSeg_Example_Form.ipynb`](https://colab.research.google.com/github/ronalabrcns/DuckSeg/blob/main/notebooks/DuckSeg_Example_Form.ipynb) runs the same
-pipeline with text fields, checkboxes and sliders, and the code is hidden.
-Add the token to *Secrets* the same way, and tick `i_accept_the_cellsam_license`
-in step 2 before running it.
+**Prefer code?** [`DuckSeg_Example.ipynb`](https://colab.research.google.com/github/ronalabrcns/DuckSeg/blob/main/notebooks/DuckSeg_Example.ipynb) runs the same pipeline as
+editable code. Add the token to *Secrets* the same way.
 
 ### Local installation
 

@@ -30,7 +30,7 @@ workflow.
 .. raw:: html
 
    <p>
-     <a href="https://colab.research.google.com/github/ronalabrcns/DuckSeg/blob/main/notebooks/DuckSeg_Example.ipynb">
+     <a href="https://colab.research.google.com/github/ronalabrcns/DuckSeg/blob/main/notebooks/DuckSeg_Example_Form.ipynb">
        <img alt="Open in Colab" src="https://colab.research.google.com/assets/colab-badge.svg">
      </a>
      <a href="https://github.com/ronalabrcns/DuckSeg">
@@ -49,12 +49,15 @@ workflow.
    The fastest way to see DuckSeg in action — including on your own
    microscopy data — is the example notebook on Google Colab:
 
-   `Open DuckSeg_Example.ipynb in Google Colab
-   <https://colab.research.google.com/github/ronalabrcns/DuckSeg/blob/main/notebooks/DuckSeg_Example.ipynb>`_
+   `Open DuckSeg_Example_Form.ipynb in Google Colab
+   <https://colab.research.google.com/github/ronalabrcns/DuckSeg/blob/main/notebooks/DuckSeg_Example_Form.ipynb>`_
 
    It clones the repository, installs dependencies (including CellSAM),
    and walks through the full pipeline end to end on a GPU runtime
-   provided free of charge by Colab.
+   provided free of charge by Colab. Every step is a form, so no code
+   needs to be edited. The same pipeline as editable code is
+   `DuckSeg_Example.ipynb
+   <https://colab.research.google.com/github/ronalabrcns/DuckSeg/blob/main/notebooks/DuckSeg_Example.ipynb>`_.
 
 Background
 ==========
@@ -150,7 +153,7 @@ For a local installation:
     hf auth login     # or set HF_TOKEN, see installation
 
 No local GPU? Use the `Google Colab notebook
-<https://colab.research.google.com/github/ronalabrcns/DuckSeg/blob/main/notebooks/DuckSeg_Example.ipynb>`_.
+<https://colab.research.google.com/github/ronalabrcns/DuckSeg/blob/main/notebooks/DuckSeg_Example_Form.ipynb>`_.
 See :doc:`installation` for all details, including the Hugging Face license and token.
 
 Quickstart
